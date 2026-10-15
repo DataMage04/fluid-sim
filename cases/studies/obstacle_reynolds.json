@@ -1,0 +1,84 @@
+{
+  "name": "obstacle_reynolds",
+  "kind": "parameter_sweep",
+  "base_case": "../obstacle.json",
+  "output_directory": "results/studies/obstacle_reynolds",
+  "keep_case_plots": false,
+  "keep_case_animation": false,
+  "runs": [
+    {
+      "label": "Re10",
+      "overrides": {
+        "fluid.dynamic_viscosity": 0.04
+      }
+    },
+    {
+      "label": "Re20",
+      "overrides": {
+        "fluid.dynamic_viscosity": 0.02
+      }
+    },
+    {
+      "label": "Re40",
+      "overrides": {
+        "fluid.dynamic_viscosity": 0.01
+      }
+    },
+    {
+      "label": "Re80",
+      "overrides": {
+        "fluid.dynamic_viscosity": 0.005
+      }
+    }
+  ],
+  "plots": [
+    {
+      "x": "reynolds_number",
+      "y": "pressure_drop",
+      "filename": "pressure_drop_vs_reynolds.png",
+      "title": "Obstacle Pressure Drop vs Reynolds Number",
+      "x_label": "Reynolds number, Re",
+      "y_label": "Pressure drop (Pa)"
+    },
+    {
+      "x": "reynolds_number",
+      "y": "pressure_drag_coefficient",
+      "filename": "pressure_drag_coefficient_vs_reynolds.png",
+      "title": "Pressure-Drag Coefficient vs Reynolds Number",
+      "x_label": "Reynolds number, Re",
+      "y_label": "Pressure-drag coefficient, Cd,p"
+    },
+    {
+      "x": "reynolds_number",
+      "y": "wake_length",
+      "filename": "wake_length_vs_reynolds.png",
+      "title": "Wake Length vs Reynolds Number",
+      "x_label": "Reynolds number, Re",
+      "y_label": "Wake length (m)"
+    },
+    {
+      "x": "reynolds_number",
+      "y": "reverse_flow_fraction",
+      "filename": "reverse_flow_fraction_vs_reynolds.png",
+      "title": "Reverse-Flow Fraction vs Reynolds Number",
+      "x_label": "Reynolds number, Re",
+      "y_label": "Reverse-flow fraction"
+    },
+    {
+      "x": "reynolds_number",
+      "y": "min_streamwise_velocity",
+      "filename": "reverse_velocity_vs_reynolds.png",
+      "title": "Peak Reverse Velocity vs Reynolds Number",
+      "x_label": "Reynolds number, Re",
+      "y_label": "Minimum streamwise velocity (m/s)"
+    },
+    {
+      "x": "reynolds_number",
+      "y": "max_speed_m_s",
+      "filename": "max_speed_vs_reynolds.png",
+      "title": "Maximum Speed vs Reynolds Number",
+      "x_label": "Reynolds number, Re",
+      "y_label": "Maximum speed (m/s)"
+    }
+  ]
+}
