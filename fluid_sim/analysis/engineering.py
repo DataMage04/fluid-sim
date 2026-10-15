@@ -24,6 +24,10 @@ class EngineeringResults:
     max_speed: float
     max_speed_x: float
     max_speed_y: float
+    min_streamwise_velocity: float
+    min_streamwise_velocity_x: float
+    min_streamwise_velocity_y: float
+    reverse_flow_fraction: float
     analytical_pressure_gradient: float | None = None
     analytical_pressure_drop: float | None = None
     pressure_drop_relative_error: float | None = None
@@ -107,6 +111,27 @@ def pressure_coefficient(
     ) / dynamic_pressure(density, reference_velocity)
 
 
+def streamwise_pressure_profile(
+    grid,
+    *,
+    density: float,
+    reference_velocity: float,
+    reference_pressure: float = 0.0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return x, cross-section mean pressure, and mean-pressure Cp profiles."""
+    q = dynamic_pressure(density, reference_velocity)
+    x_centres = (np.arange(grid.nx) + 0.5) * grid.dx
+    mean_pressure = np.full(grid.nx, np.nan, dtype=float)
+
+    for i in range(grid.nx):
+        fluid_rows = ~grid.solid[:, i]
+        if np.any(fluid_rows):
+            mean_pressure[i] = float(np.mean(grid.p[fluid_rows, i]))
+
+    cp = (mean_pressure - reference_pressure) / q
+    return x_centres, mean_pressure, cp
+
+
 def maximum_velocity_location(grid) -> tuple[float, float, float]:
     """Return maximum cell-centred speed and its (x, y) coordinates."""
     u_center, v_center = get_cell_center_velocity(grid)
@@ -120,6 +145,33 @@ def maximum_velocity_location(grid) -> tuple[float, float, float]:
     x, y = grid.cell_centres()
 
     return float(speed[j, i]), float(x[j, i]), float(y[j, i])
+
+
+def reverse_flow_metrics(
+    grid,
+    *,
+    tolerance: float = 1.0e-12,
+) -> tuple[float, float, float, float]:
+    """Return minimum u, its location, and the fraction of fluid cells with reverse flow."""
+    if tolerance < 0.0:
+        raise ValueError("Reverse-flow tolerance cannot be negative.")
+
+    u_center, _ = get_cell_center_velocity(grid)
+    fluid_u = u_center[~grid.solid]
+    if fluid_u.size == 0:
+        raise ValueError("The grid contains no fluid cells.")
+
+    flat_index = int(np.nanargmin(u_center))
+    j, i = np.unravel_index(flat_index, u_center.shape)
+    x, y = grid.cell_centres()
+    reverse_fraction = float(np.count_nonzero(fluid_u < -tolerance) / fluid_u.size)
+
+    return (
+        float(u_center[j, i]),
+        float(x[j, i]),
+        float(y[j, i]),
+        reverse_fraction,
+    )
 
 
 def analytical_poiseuille_pressure_gradient(
@@ -179,6 +231,7 @@ def compute_engineering_results(
 
     q = dynamic_pressure(density, reference_velocity)
     max_speed, max_speed_x, max_speed_y = maximum_velocity_location(grid)
+    min_u, min_u_x, min_u_y, reverse_fraction = reverse_flow_metrics(grid)
 
     analytical_drop = None
     relative_error = None
@@ -214,6 +267,10 @@ def compute_engineering_results(
         max_speed=max_speed,
         max_speed_x=max_speed_x,
         max_speed_y=max_speed_y,
+        min_streamwise_velocity=min_u,
+        min_streamwise_velocity_x=min_u_x,
+        min_streamwise_velocity_y=min_u_y,
+        reverse_flow_fraction=reverse_fraction,
         analytical_pressure_gradient=analytical_pressure_gradient,
         analytical_pressure_drop=analytical_drop,
         pressure_drop_relative_error=relative_error,
