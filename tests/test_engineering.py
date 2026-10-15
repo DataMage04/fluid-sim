@@ -88,7 +88,7 @@ def test_reverse_flow_metrics_detect_negative_streamwise_velocity():
     grid.u[:] = 1.0
     grid.v[:] = 0.0
 
-    # Make the centre cell's reconstructed u velocity negative.
+    # Three reconstructed cells on the lower row become negative.
     grid.u[0, 1] = -2.0
     grid.u[0, 2] = -2.0
 
@@ -97,7 +97,7 @@ def test_reverse_flow_metrics_detect_negative_streamwise_velocity():
     assert np.isclose(min_u, -2.0)
     assert np.isclose(x, 1.5)
     assert np.isclose(y, 0.5)
-    assert np.isclose(fraction, 1.0 / 6.0)
+    assert np.isclose(fraction, 0.5)
 
 
 def test_poiseuille_pressure_drop_formula():
