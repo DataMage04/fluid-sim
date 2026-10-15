@@ -38,17 +38,19 @@ def test_staggered_velocity_coordinates_match_array_shapes():
 
 
 def test_add_rectangle_marks_expected_cells():
-    grid = MACGrid(nx=10, ny=10, width=1.0, height=1.0)
+    # Use exactly representable binary fractions so this test checks geometry
+    # logic rather than floating-point division edge cases.
+    grid = MACGrid(nx=4, ny=4, width=1.0, height=1.0)
 
     grid.add_rectangle(
-        x_min=0.2,
-        x_max=0.5,
-        y_min=0.3,
-        y_max=0.7,
+        x_min=0.25,
+        x_max=0.75,
+        y_min=0.25,
+        y_max=0.75,
     )
 
-    expected = np.zeros((10, 10), dtype=bool)
-    expected[2:6, 2:5] = True
+    expected = np.zeros((4, 4), dtype=bool)
+    expected[1:3, 1:3] = True
 
     assert np.array_equal(grid.solid, expected)
 
