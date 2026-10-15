@@ -57,7 +57,7 @@ def test_build_study_case_applies_overrides_and_disables_heavy_outputs(tmp_path)
     assert case.output.save_plots is False
     assert case.output.save_animation is False
     assert case.output.show_final_plot is False
-    assert case.output.directory.endswith("runs/coarse")
+    assert Path(case.output.directory).parts[-2:] == ("runs", "coarse")
 
 
 def test_grid_convergence_observed_order_is_computed_pairwise():
