@@ -45,7 +45,17 @@ class RectangleObstacle:
 
     def validate(self) -> None:
         if self.x_min >= self.x_max or self.y_min >= self.y_max:
-            raise ValueError("Obstacle minimum coordinates must be below maximum coordinates.")
+            raise ValueError(
+                "Obstacle minimum coordinates must be below maximum coordinates."
+            )
+
+    def overlaps_domain(self, domain: DomainConfig) -> bool:
+        return not (
+            self.x_max <= 0.0
+            or self.x_min >= domain.width
+            or self.y_max <= 0.0
+            or self.y_min >= domain.height
+        )
 
 
 @dataclass
@@ -58,6 +68,8 @@ class InletConfig:
             raise ValueError(
                 "Inlet profile must be either 'poiseuille' or 'uniform'."
             )
+        if self.mean_velocity < 0.0:
+            raise ValueError("Mean inlet velocity cannot be negative.")
 
 
 @dataclass
@@ -86,6 +98,10 @@ class ValidationConfig:
     enabled: bool = True
     x_location: float = 1.5
 
+    def validate(self) -> None:
+        if self.x_location < 0.0:
+            raise ValueError("Validation x_location cannot be negative.")
+
 
 @dataclass
 class OutputConfig:
@@ -98,6 +114,8 @@ class OutputConfig:
     diagnostics_interval: int = 100
 
     def validate(self) -> None:
+        if not self.directory.strip():
+            raise ValueError("Output directory cannot be empty.")
         if self.frame_interval <= 0:
             raise ValueError("frame_interval must be positive.")
         if self.animation_fps <= 0:
@@ -120,6 +138,8 @@ class CaseConfig:
 
     @property
     def reynolds_number(self) -> float:
+        if self.fluid.dynamic_viscosity == 0.0:
+            return float("inf")
         return (
             self.fluid.density
             * self.inlet.mean_velocity
@@ -130,19 +150,26 @@ class CaseConfig:
     def validate(self) -> None:
         if not self.name.strip():
             raise ValueError("Case name cannot be empty.")
+
         self.fluid.validate()
         self.domain.validate()
         self.inlet.validate()
         self.time.validate()
         self.solver.validate()
+        self.validation.validate()
         self.output.validate()
+
+        if self.validation.x_location > self.domain.width:
+            raise ValueError(
+                "Validation x_location must lie inside the configured domain."
+            )
+
         for obstacle in self.obstacles:
             obstacle.validate()
-
-        if self.fluid.dynamic_viscosity == 0.0:
-            # Reynolds number is undefined/infinite for the current reporting formula.
-            # Zero viscosity remains supported by the numerical diffusion operator.
-            pass
+            if not obstacle.overlaps_domain(self.domain):
+                raise ValueError(
+                    "Configured obstacle does not overlap the simulation domain."
+                )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CaseConfig":
