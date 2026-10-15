@@ -1,11 +1,57 @@
 from __future__ import annotations
 
 from pathlib import Path
+from threading import Event, Thread
+from time import perf_counter
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
 from tqdm import tqdm
+
+
+class _ProgressPillowWriter(PillowWriter):
+    """Pillow GIF writer with visible progress during final compression.
+
+    Matplotlib renders all frames before Pillow performs the potentially slow
+    final GIF compression/write step. Pillow does not expose byte-level
+    progress callbacks, so an elapsed-time indicator is shown while that final
+    blocking operation is running.
+    """
+
+    def finish(self):
+        stop_event = Event()
+        start_time = perf_counter()
+
+        def show_finalizing_status():
+            with tqdm(
+                total=None,
+                desc="Finalizing GIF",
+                unit="s",
+                bar_format="{desc}: {elapsed} elapsed",
+                dynamic_ncols=True,
+                leave=True,
+            ) as status:
+                while not stop_event.wait(0.5):
+                    status.refresh()
+
+        reporter = Thread(
+            target=show_finalizing_status,
+            name="gif-finalization-progress",
+            daemon=True,
+        )
+        reporter.start()
+
+        try:
+            super().finish()
+        finally:
+            stop_event.set()
+            reporter.join()
+
+        elapsed = perf_counter() - start_time
+        tqdm.write(
+            f"GIF finalized in {elapsed:.1f} s: {self.outfile}"
+        )
 
 
 def _output_path(filename: str | Path) -> Path:
@@ -50,6 +96,14 @@ def animate_flow(
     between frames. Pressure uses a symmetric scale that adapts to each frame.
     This prevents a large startup pressure transient from washing out the much
     smaller pressure variations once the flow settles.
+
+    Progress is reported in two stages:
+
+    1. Rendering the individual animation frames.
+    2. Final Pillow GIF compression and file writing.
+
+    Pillow does not expose a percentage for the second stage, so an elapsed
+    timer is shown while finalization is in progress.
     """
     if len(states) == 0:
         raise ValueError("No flow states were supplied.")
@@ -154,22 +208,39 @@ def animate_flow(
     animation = FuncAnimation(
         fig,
         update,
-        frames=tqdm(
-            range(len(states)),
-            desc="Rendering Animation",
-            unit="frame",
-        ),
+        frames=range(len(states)),
         interval=1000 / fps,
         blit=False,
     )
 
     fig.tight_layout()
-    animation.save(
-        _output_path(filename),
-        writer=PillowWriter(fps=fps),
-        dpi=120,
+
+    frame_progress = tqdm(
+        total=len(states),
+        desc="Rendering animation",
+        unit="frame",
+        dynamic_ncols=True,
     )
-    plt.close(fig)
+
+    def update_save_progress(frame_number, total_frames):
+        completed = min(frame_number + 1, total_frames)
+        if completed > frame_progress.n:
+            frame_progress.update(completed - frame_progress.n)
+
+        if completed >= total_frames and not frame_progress.disable:
+            frame_progress.set_description("Frames rendered")
+            frame_progress.close()
+
+    try:
+        animation.save(
+            _output_path(filename),
+            writer=_ProgressPillowWriter(fps=fps),
+            dpi=120,
+            progress_callback=update_save_progress,
+        )
+    finally:
+        frame_progress.close()
+        plt.close(fig)
 
 
 def flow_rate_metrics(grid) -> dict[str, float]:
