@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fluid_sim.io.output import TextReport, write_to_output
+from fluid_sim.io.output import TextReport, write_table_csv, write_to_output
 
 
 def test_write_to_output_replaces_previous_file_and_adds_newlines(tmp_path, monkeypatch):
@@ -45,3 +45,20 @@ def test_write_to_output_accepts_rendered_report(tmp_path):
     text = output.read_text(encoding="utf-8")
     assert "REPORT" in text
     assert "COMPLETED" in text
+
+
+def test_write_table_csv_writes_multiple_rows(tmp_path):
+    output = tmp_path / "pressure_profile.csv"
+
+    write_table_csv(
+        [
+            {"x_m": 0.25, "mean_pressure_Pa": 2.0, "mean_Cp": 4.0},
+            {"x_m": 0.75, "mean_pressure_Pa": 1.0, "mean_Cp": 2.0},
+        ],
+        output,
+    )
+
+    text = output.read_text(encoding="utf-8")
+    assert "x_m,mean_pressure_Pa,mean_Cp" in text
+    assert "0.25,2.0,4.0" in text
+    assert "0.75,1.0,2.0" in text
