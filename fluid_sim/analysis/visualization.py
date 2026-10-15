@@ -218,12 +218,16 @@ def animate_flow(
     # Create animation
     # ---------------------------------------------------------
     animation = FuncAnimation(
-        fig,
-        update,
-        frames=len(states),
-        interval=1000 / fps,
-        blit=False
-    )
+    fig,
+    update,
+    frames=tqdm(
+        range(len(states)),
+        desc="Rendering Animation",
+        unit="frame"
+    ),
+    interval=1000 / fps,
+    blit=False
+)
 
     fig.tight_layout()
 
