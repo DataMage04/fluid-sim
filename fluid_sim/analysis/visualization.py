@@ -26,23 +26,35 @@ def _draw_solid_outline(ax, x, y, solid) -> None:
         )
 
 
+def _symmetric_pressure_limit(pressure, solid) -> float:
+    """Return a finite symmetric colour limit for the fluid pressure field."""
+    fluid_pressure = np.asarray(pressure)[~solid]
+    if fluid_pressure.size == 0:
+        return 1.0
+
+    limit = float(np.nanmax(np.abs(fluid_pressure)))
+    if not np.isfinite(limit) or limit <= np.finfo(float).eps:
+        return 1.0
+    return limit
+
+
 def animate_flow(
     grid,
     states,
     filename: str | Path = "results/flow_animation.gif",
     fps=20,
 ):
-    """Create a velocity/pressure animation for stored flow states."""
+    """Create a velocity/pressure animation for stored flow states.
+
+    Velocity uses a fixed colour scale so speed can be compared directly
+    between frames. Pressure uses a symmetric scale that adapts to each frame.
+    This prevents a large startup pressure transient from washing out the much
+    smaller pressure variations once the flow settles.
+    """
     if len(states) == 0:
         raise ValueError("No flow states were supplied.")
 
     max_speed = max(np.nanmax(state["speed"]) for state in states)
-    max_pressure = max(
-        np.max(np.abs(state["pressure"][~grid.solid]))
-        for state in states
-    )
-    if max_pressure == 0.0:
-        max_pressure = 1.0
 
     x, y = grid.cell_centres()
     stride = max(1, min(grid.nx, grid.ny) // 15)
@@ -58,6 +70,10 @@ def animate_flow(
     first = states[0]
     speed0 = np.ma.masked_where(grid.solid, first["speed"])
     pressure0 = np.ma.masked_where(grid.solid, first["pressure"])
+    pressure_limit0 = _symmetric_pressure_limit(
+        first["pressure"],
+        grid.solid,
+    )
     u0 = first["u"][::stride, ::stride][fluid_quiver]
     v0 = first["v"][::stride, ::stride][fluid_quiver]
 
@@ -93,13 +109,13 @@ def animate_flow(
         pressure0,
         origin="lower",
         extent=[0, grid.width, 0, grid.height],
-        vmin=-max_pressure,
-        vmax=max_pressure,
+        vmin=-pressure_limit0,
+        vmax=pressure_limit0,
         cmap="coolwarm",
         interpolation="nearest",
         aspect="equal",
     )
-    fig.colorbar(
+    pressure_colorbar = fig.colorbar(
         pressure_image,
         ax=ax_pressure,
         label="Pressure (Pa)",
@@ -117,6 +133,13 @@ def animate_flow(
 
         velocity_image.set_data(speed)
         pressure_image.set_data(pressure)
+
+        pressure_limit = _symmetric_pressure_limit(
+            state["pressure"],
+            grid.solid,
+        )
+        pressure_image.set_clim(-pressure_limit, pressure_limit)
+        pressure_colorbar.update_normal(pressure_image)
 
         u = state["u"][::stride, ::stride][fluid_quiver]
         v = state["v"][::stride, ::stride][fluid_quiver]
