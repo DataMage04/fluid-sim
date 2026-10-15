@@ -16,10 +16,6 @@ def apply_boundary_conditions(grid, inlet_velocity=1.0):
     grid.v[0, :] = 0.0
     grid.v[-1, :] = 0.0
 
-    # Approximate no-slip tangential velocity at walls.
-    grid.u[0, :] = 0.0
-    grid.u[-1, :] = 0.0
-
     # Extrapolate vertical velocity near inlet and outlet.
     if grid.nx > 1:
         grid.v[:, 0] = grid.v[:, 1]

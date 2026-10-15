@@ -238,8 +238,6 @@ def animate_flow(
 
     plt.close(fig)
 
-    print(f"Saved {filename}")
-
 def measure_flow_rates(grid):
     inlet_flow = np.sum(grid.u[:, 0]) * grid.dy
     outlet_flow = np.sum(grid.u[:, -1]) * grid.dy
@@ -361,10 +359,6 @@ def save_flow_plots(grid):
     plot_velocity_magnitude(grid)
     plot_velocity_vectors(grid)
     plot_pressure(grid)
-
-    print("Saved velocity_magnitude.png")
-    print("Saved velocity_vectors.png")
-    print("Saved pressure.png")
 
 def capture_flow_state(grid, time):
     """

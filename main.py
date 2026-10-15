@@ -1,4 +1,4 @@
-import tqdm
+from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -18,10 +18,11 @@ from solver import (
     project_velocity,
     divergence_metrics,
 )
-
-rho = 1.0
-frame_interval = 5
-flow_states = []
+from diffusion import (
+    diffuse_velocity,
+    diffusion_timestep_limit,
+)
+from validation import validate_poiseuille
 
 def main():
     # --------------------------------------------
@@ -35,17 +36,23 @@ def main():
     )
 
     # Rectangular obstruction
-    grid.add_rectangle(
-        x_min=0.8,
-        x_max=1.0,
-        y_min=0.3,
-        y_max=0.7,
-    )
+    # grid.add_rectangle(
+    #     x_min=0.8,
+    #     x_max=1.0,
+    #     y_min=0.3,
+    #     y_max=0.7,
+    # )
 
     # Simulation parameters
+    rho = 1.0                 # kg/m^3
+    mu = 0.01                 # Pa.s
+
+    nu = mu / rho             # m^2/s
+    frame_interval = 5
+    flow_states = []
     dt = 0.005
     inlet_velocity = 1.0
-    steps = 400
+    steps = 1000
 
     # Initialise the velocity field
     grid.u[:] = inlet_velocity
@@ -58,39 +65,35 @@ def main():
     # --------------------------------------------
 
     for step in tqdm(range(steps)):
-        # ---------------------------------------------------------
-        # 1. Boundary conditions
-        # ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+    # 1. Apply boundary conditions
+    # ---------------------------------------------------------
 
         apply_boundary_conditions(
             grid,
             inlet_velocity=inlet_velocity
         )
-
-        # ---------------------------------------------------------
-        # 2. Advect velocity
-        # ---------------------------------------------------------
 
         advect_velocity(grid, dt)
 
-        # ---------------------------------------------------------
-        # 3. Reapply BC after advection
-        # ---------------------------------------------------------
+        apply_boundary_conditions(
+            grid,
+            inlet_velocity=inlet_velocity
+        )
+
+        diffuse_velocity(
+            grid,
+            dt,
+            nu
+        )
 
         apply_boundary_conditions(
             grid,
             inlet_velocity=inlet_velocity
         )
 
-        # ---------------------------------------------------------
-        # 4. Divergence before projection
-        # ---------------------------------------------------------
-
         max_before, rms_before = divergence_metrics(grid)
-
-        # ---------------------------------------------------------
-        # 5. Pressure solve
-        # ---------------------------------------------------------
 
         solve_pressure(
             grid,
@@ -98,21 +101,15 @@ def main():
             rho=rho
         )
 
-        # ---------------------------------------------------------
-        # 6. Velocity projection
-        # ---------------------------------------------------------
-
         project_velocity(
             grid,
             dt,
             rho=rho
         )
 
-        # ---------------------------------------------------------
-        # 7. Divergence after projection
-        # ---------------------------------------------------------
-
         max_after, rms_after = divergence_metrics(grid)
+
+    # Existing animation capture can remain here.
 
         # ---------------------------------------------------------
         # 8. Save animation frame
@@ -133,7 +130,7 @@ def main():
         # Print diagnostics occasionally
         # ---------------------------------------------------------
 
-        if (step + 1) % 20 == 0:
+        if (step + 1) % 100 == 0:
 
             print(
                 f"Step {step + 1}/{steps}: "
@@ -151,6 +148,75 @@ def main():
     save_flow_plots(grid)
 
     measure_flow_rates(grid)
+
+    diffusion_dt_limit = diffusion_timestep_limit(grid,nu)
+
+    print(
+        f"Diffusion dt limit:   "
+        f"{diffusion_dt_limit:.6e} s"
+    )
+
+    print(
+        f"Current dt:            "
+        f"{dt:.6e} s"
+    )
+
+    u_center, v_center = get_cell_center_velocity(grid)
+
+    speed = np.sqrt(
+        u_center**2
+        + v_center**2
+    )
+
+    fluid_speed = speed[~grid.solid]
+
+    print(
+        f"Maximum fluid speed: "
+        f"{np.nanmax(fluid_speed):.6f} m/s"
+    )
+
+    print(
+        f"Mean fluid speed: "
+        f"{np.nanmean(fluid_speed):.6f} m/s"
+    )
+
+    characteristic_length = 0.4
+
+    reynolds_number = (
+        rho
+        * inlet_velocity
+        * characteristic_length
+        / mu
+    )
+
+    print(f"Density:              {rho:.6g} kg/m^3")
+    print(f"Dynamic viscosity:    {mu:.6g} Pa.s")
+    print(f"Kinematic viscosity:  {nu:.6g} m^2/s")
+    print(f"Reynolds number:       {reynolds_number:.2f}")
+
+    diffusion_number_x = nu * dt / grid.dx**2
+    diffusion_number_y = nu * dt / grid.dy**2
+
+    print(
+        f"Diffusion number x:   "
+        f"{diffusion_number_x:.4f}"
+    )
+
+    print(
+        f"Diffusion number y:   "
+        f"{diffusion_number_y:.4f}"
+    )
+
+    print(
+        f"Combined diffusion #: "
+        f"{diffusion_number_x + diffusion_number_y:.4f}"
+    )
+    errors = validate_poiseuille(
+        grid,
+        mean_velocity=1.0,
+        x_location=1.5
+    )
+    print("Errors: ", errors)
 
 
     # --------------------------------------------
