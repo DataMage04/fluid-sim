@@ -2,29 +2,29 @@ from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 
-from grid import MACGrid
-from advection import advect_velocity
-from visualization import (
-    save_flow_plots, 
+from fluid_sim.core.grid import MACGrid
+from fluid_sim.numerics.advection import advect_velocity
+from fluid_sim.analysis.visualization import (
+    save_flow_plots,
     get_cell_center_velocity,
     measure_flow_rates,
     capture_flow_state,
     animate_flow,
-    reconstuct_cell_centred_velocities
+    reconstuct_cell_centred_velocities,
 )
-from boundary_conditions import apply_boundary_conditions
-from solver import (
+from fluid_sim.numerics.boundary_conditions import apply_boundary_conditions
+from fluid_sim.numerics.solver import (
     compute_divergence,
     solve_pressure,
     project_velocity,
     divergence_metrics,
 )
-from diffusion import (
+from fluid_sim.numerics.diffusion import (
     diffuse_velocity,
     diffusion_timestep_limit,
 )
-from validation import validate_poiseuille
-from data import write_to_output
+from fluid_sim.analysis.validation import validate_poiseuille
+from fluid_sim.io.output import write_to_output
 
 data = []
 def main():
@@ -242,11 +242,10 @@ def main():
 
     for p in poiseuille:
         data.append(p)
-    
+
     data.append("=======Errors=======")
     for error in errors.keys():
         data.append(f"{error}: {errors[error]}")
-    
 
     write_to_output(data)
 
@@ -256,7 +255,7 @@ def main():
     #    for visualisation only
     # --------------------------------------------
     reconstuct_cell_centred_velocities(grid)
-    
+
 
 
 if __name__ == "__main__":

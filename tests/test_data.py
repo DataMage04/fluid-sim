@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from data import write_to_output
+from fluid_sim.io.output import write_to_output
 
 
 def test_write_to_output_replaces_previous_file_and_adds_newlines(tmp_path, monkeypatch):

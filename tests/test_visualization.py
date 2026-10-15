@@ -1,7 +1,7 @@
 import numpy as np
 
-from grid import MACGrid
-from visualization import get_cell_center_velocity, measure_flow_rates
+from fluid_sim.core.grid import MACGrid
+from fluid_sim.analysis.visualization import get_cell_center_velocity, measure_flow_rates
 
 
 def test_get_cell_center_velocity_reconstructs_mac_faces():

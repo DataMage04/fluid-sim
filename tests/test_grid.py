@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from grid import MACGrid
+from fluid_sim.core.grid import MACGrid
 
 
 def test_mac_grid_array_shapes_and_spacing():

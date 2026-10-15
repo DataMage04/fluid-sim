@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 
-from boundary_conditions import (
+from fluid_sim.numerics.boundary_conditions import (
     apply_boundary_conditions,
     apply_poiseuille_inlet,
 )
-from grid import MACGrid
+from fluid_sim.core.grid import MACGrid
 
 
 def test_poiseuille_inlet_matches_analytical_profile():

@@ -1,7 +1,7 @@
 import numpy as np
 
-from grid import MACGrid
-from validation import (
+from fluid_sim.core.grid import MACGrid
+from fluid_sim.analysis.validation import (
     analytical_poiseuille_profile,
     numerical_velocity_profile,
     profile_error,

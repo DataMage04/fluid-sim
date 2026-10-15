@@ -1,7 +1,7 @@
 import numpy as np
 
-from advection import advect_velocity
-from grid import MACGrid
+from fluid_sim.numerics.advection import advect_velocity
+from fluid_sim.core.grid import MACGrid
 
 
 def test_constant_velocity_field_is_preserved_by_advection():

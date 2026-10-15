@@ -7,13 +7,13 @@ import numpy as np
 # Adds the parent directory to Python's search path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from grid import MACGrid
-from advection import (
+from fluid_sim.core.grid import MACGrid
+from fluid_sim.numerics.advection import (
     bilinear_sample,
     sample_velocity,
     advect_velocity,
 )
-from boundary_conditions import apply_boundary_conditions
+from fluid_sim.numerics.boundary_conditions import apply_boundary_conditions
 
 
 def test_bilinear_interpolation():

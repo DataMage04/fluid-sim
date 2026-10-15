@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from diffusion import diffuse_velocity, diffusion_timestep_limit
-from grid import MACGrid
+from fluid_sim.numerics.diffusion import diffuse_velocity, diffusion_timestep_limit
+from fluid_sim.core.grid import MACGrid
 
 
 def test_diffusion_timestep_limit_matches_formula():

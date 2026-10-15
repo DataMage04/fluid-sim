@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from grid import MACGrid
-from solver import (
+from fluid_sim.core.grid import MACGrid
+from fluid_sim.numerics.solver import (
     compute_divergence,
     divergence_metrics,
     project_velocity,
