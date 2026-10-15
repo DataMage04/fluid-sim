@@ -1,12 +1,32 @@
 
 import numpy as np
 
+def apply_poiseuille_inlet(grid, mean_velocity):
+    """
+    Apply a fully developed parabolic velocity profile
+    at the left inlet.
+    """
+
+    y = (np.arange(grid.ny) + 0.5) * grid.dy
+    eta = y / grid.height
+
+    inlet_profile = (
+        6.0
+        * mean_velocity
+        * eta
+        * (1.0 - eta)
+    )
+
+    grid.u[:, 0] = inlet_profile
 
 def apply_boundary_conditions(grid, inlet_velocity=1.0):
     """Apply channel, inlet, outlet, and solid-cell conditions."""
 
     # Inlet: prescribe horizontal velocity.
-    grid.u[:, 0] = inlet_velocity
+    apply_poiseuille_inlet(
+        grid,
+        mean_velocity=1.0
+    )
 
     # Outlet: approximate zero horizontal velocity gradient.
     grid.u[:, -1] = grid.u[:, -2]
@@ -46,3 +66,5 @@ def apply_boundary_conditions(grid, inlet_velocity=1.0):
     # Ensure solid cells do not retain pressure values
     # from previous iterations.
     grid.p[grid.solid] = 0.0
+
+

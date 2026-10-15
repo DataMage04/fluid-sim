@@ -10,6 +10,7 @@ from visualization import (
     measure_flow_rates,
     capture_flow_state,
     animate_flow,
+    reconstuct_cell_centred_velocities
 )
 from boundary_conditions import apply_boundary_conditions
 from solver import (
@@ -23,7 +24,9 @@ from diffusion import (
     diffusion_timestep_limit,
 )
 from validation import validate_poiseuille
+from data import write_to_output
 
+data = []
 def main():
     # --------------------------------------------
     # 1. Create the simulation domain
@@ -58,13 +61,32 @@ def main():
     grid.u[:] = inlet_velocity
     grid.v[:] = 0.0
 
+    y_u = (
+        np.arange(grid.ny) + 0.5
+    ) * grid.dy
+
+    eta = y_u / grid.height
+
+    profile = (
+        6.0
+        * inlet_velocity
+        * eta
+        * (1.0 - eta)
+    )
+
+    for i in range(grid.nx + 1):
+        grid.u[:, i] = profile
+
+    grid.v[:, :] = 0.0
+
     apply_boundary_conditions(grid, inlet_velocity)
 
     # --------------------------------------------
     # 2. Advance the velocity field
     # --------------------------------------------
 
-    for step in tqdm(range(steps)):
+    rms_on_steps = {}
+    for step in tqdm(range(steps), desc="Simulation Progress"):
 
     # ---------------------------------------------------------
     # 1. Apply boundary conditions
@@ -131,12 +153,11 @@ def main():
         # ---------------------------------------------------------
 
         if (step + 1) % 100 == 0:
+            rms_on_steps[f"Step {step + 1}/{steps}"] = f"{rms_before:.3e} -> {rms_after:.3e}"
 
-            print(
-                f"Step {step + 1}/{steps}: "
-                f"RMS divergence "
-                f"{rms_before:.3e} -> {rms_after:.3e}"
-            )
+    data.append("RMS Divergence")
+    for rms_step in rms_on_steps.keys():
+        data.append(f"{rms_step}: RMS divergence {rms_on_steps[rms_step]}")
 
     animate_flow(
         grid,
@@ -151,12 +172,12 @@ def main():
 
     diffusion_dt_limit = diffusion_timestep_limit(grid,nu)
 
-    print(
+    data.append(
         f"Diffusion dt limit:   "
         f"{diffusion_dt_limit:.6e} s"
     )
 
-    print(
+    data.append(
         f"Current dt:            "
         f"{dt:.6e} s"
     )
@@ -170,12 +191,12 @@ def main():
 
     fluid_speed = speed[~grid.solid]
 
-    print(
+    data.append(
         f"Maximum fluid speed: "
         f"{np.nanmax(fluid_speed):.6f} m/s"
     )
 
-    print(
+    data.append(
         f"Mean fluid speed: "
         f"{np.nanmean(fluid_speed):.6f} m/s"
     )
@@ -189,25 +210,25 @@ def main():
         / mu
     )
 
-    print(f"Density:              {rho:.6g} kg/m^3")
-    print(f"Dynamic viscosity:    {mu:.6g} Pa.s")
-    print(f"Kinematic viscosity:  {nu:.6g} m^2/s")
-    print(f"Reynolds number:       {reynolds_number:.2f}")
+    data.append(f"Density:              {rho:.6g} kg/m^3")
+    data.append(f"Dynamic viscosity:    {mu:.6g} Pa.s")
+    data.append(f"Kinematic viscosity:  {nu:.6g} m^2/s")
+    data.append(f"Reynolds number:       {reynolds_number:.2f}")
 
     diffusion_number_x = nu * dt / grid.dx**2
     diffusion_number_y = nu * dt / grid.dy**2
 
-    print(
+    data.append(
         f"Diffusion number x:   "
         f"{diffusion_number_x:.4f}"
     )
 
-    print(
+    data.append(
         f"Diffusion number y:   "
         f"{diffusion_number_y:.4f}"
     )
 
-    print(
+    data.append(
         f"Combined diffusion #: "
         f"{diffusion_number_x + diffusion_number_y:.4f}"
     )
@@ -216,92 +237,19 @@ def main():
         mean_velocity=1.0,
         x_location=1.5
     )
-    print("Errors: ", errors)
+    data.append("=======Errors=======")
+    for error in errors.keys():
+        data.append(error, ": ",errors[error])
+
+    write_to_output(data)
 
 
     # --------------------------------------------
     # 3. Reconstruct cell-centred velocities
     #    for visualisation only
     # --------------------------------------------
-
-    u_center = 0.5 * (
-        grid.u[:, :-1] + grid.u[:, 1:]
-    )
-
-    v_center = 0.5 * (
-        grid.v[:-1, :] + grid.v[1:, :]
-    )
-
-    speed = np.sqrt(
-        u_center**2 + v_center**2
-    )
-
-    X, Y = grid.cell_centres()
-
-    # Mask solid cells in the visualisation.
-    speed_plot = np.ma.array(
-        speed,
-        mask=grid.solid,
-    )
-
-    # --------------------------------------------
-    # 4. Plot velocity magnitude and vectors
-    # --------------------------------------------
-
-    fig, ax = plt.subplots(figsize=(12, 5))
-
-    contour = ax.pcolormesh(
-        X,
-        Y,
-        speed_plot,
-        shading="nearest",
-        cmap="viridis",
-    )
-
-    fig.colorbar(
-        contour,
-        ax=ax,
-        label="Velocity magnitude (m/s)",
-    )
-
-    # Display the solid obstruction.
-    ax.contourf(
-        X,
-        Y,
-        grid.solid.astype(float),
-        levels=[0.5, 1.5],
-        colors=["dimgray"],
-    )
-
-    # Plot a subset of velocity vectors.
-    stride = 3
-
-    ax.quiver(
-        X[::stride, ::stride],
-        Y[::stride, ::stride],
-        np.ma.array(
-            u_center[::stride, ::stride],
-            mask=grid.solid[::stride, ::stride],
-        ),
-        np.ma.array(
-            v_center[::stride, ::stride],
-            mask=grid.solid[::stride, ::stride],
-        ),
-        color="white",
-        scale=20,
-    )
-
-    ax.set_title(
-        "2D MAC Grid: Semi-Lagrangian Advection"
-    )
-    ax.set_xlabel("x (m)")
-    ax.set_ylabel("y (m)")
-    ax.set_xlim(0, grid.width)
-    ax.set_ylim(0, grid.height)
-    ax.set_aspect("equal")
-
-    plt.tight_layout()
-    plt.show()
+    reconstuct_cell_centred_velocities(grid)
+    
 
 
 if __name__ == "__main__":

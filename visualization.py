@@ -1,7 +1,7 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
+
 
 def animate_flow(
     grid,
@@ -375,3 +375,83 @@ def capture_flow_state(grid, time):
         "speed": speed.copy(),
         "pressure": grid.p.copy(),
     }
+
+def reconstuct_cell_centred_velocities(grid):
+    u_center = 0.5 * (
+        grid.u[:, :-1] + grid.u[:, 1:]
+    )
+
+    v_center = 0.5 * (
+        grid.v[:-1, :] + grid.v[1:, :]
+    )
+
+    speed = np.sqrt(
+        u_center**2 + v_center**2
+    )
+
+    X, Y = grid.cell_centres()
+
+    # Mask solid cells in the visualisation.
+    speed_plot = np.ma.array(
+        speed,
+        mask=grid.solid,
+    )
+
+    # --------------------------------------------
+    # 4. Plot velocity magnitude and vectors
+    # --------------------------------------------
+
+    fig, ax = plt.subplots(figsize=(12, 5))
+
+    contour = ax.pcolormesh(
+        X,
+        Y,
+        speed_plot,
+        shading="nearest",
+        cmap="viridis",
+    )
+
+    fig.colorbar(
+        contour,
+        ax=ax,
+        label="Velocity magnitude (m/s)",
+    )
+
+    # Display the solid obstruction.
+    ax.contourf(
+        X,
+        Y,
+        grid.solid.astype(float),
+        levels=[0.5, 1.5],
+        colors=["dimgray"],
+    )
+
+    # Plot a subset of velocity vectors.
+    stride = 3
+
+    ax.quiver(
+        X[::stride, ::stride],
+        Y[::stride, ::stride],
+        np.ma.array(
+            u_center[::stride, ::stride],
+            mask=grid.solid[::stride, ::stride],
+        ),
+        np.ma.array(
+            v_center[::stride, ::stride],
+            mask=grid.solid[::stride, ::stride],
+        ),
+        color="white",
+        scale=20,
+    )
+
+    ax.set_title(
+        "2D MAC Grid: Semi-Lagrangian Advection"
+    )
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (m)")
+    ax.set_xlim(0, grid.width)
+    ax.set_ylim(0, grid.height)
+    ax.set_aspect("equal")
+
+    plt.tight_layout()
+    plt.show()
