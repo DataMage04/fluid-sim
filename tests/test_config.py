@@ -26,6 +26,19 @@ def test_case_config_computes_kinematic_viscosity_and_reynolds_number():
     assert np.isclose(case.reynolds_number, 75.0)
 
 
+def test_zero_viscosity_reports_infinite_reynolds_number():
+    case = CaseConfig.from_dict(
+        {
+            "fluid": {
+                "density": 1.0,
+                "dynamic_viscosity": 0.0,
+            }
+        }
+    )
+
+    assert np.isinf(case.reynolds_number)
+
+
 def test_load_case_reads_json(tmp_path):
     path = tmp_path / "case.json"
     path.write_text(
@@ -66,5 +79,35 @@ def test_case_rejects_invalid_grid_size():
                     "nx": 0,
                     "ny": 10,
                 }
+            }
+        )
+
+
+def test_case_rejects_validation_location_outside_domain():
+    with pytest.raises(ValueError, match="x_location"):
+        CaseConfig.from_dict(
+            {
+                "domain": {
+                    "width": 1.0,
+                },
+                "validation": {
+                    "x_location": 1.5,
+                },
+            }
+        )
+
+
+def test_case_rejects_obstacle_outside_domain():
+    with pytest.raises(ValueError, match="obstacle"):
+        CaseConfig.from_dict(
+            {
+                "obstacles": [
+                    {
+                        "x_min": 3.0,
+                        "x_max": 4.0,
+                        "y_min": 0.2,
+                        "y_max": 0.6,
+                    }
+                ]
             }
         )
