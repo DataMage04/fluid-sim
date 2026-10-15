@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from fluid_sim.core.grid import MACGrid
 from fluid_sim.analysis.visualization import (
     _symmetric_pressure_limit,
+    animate_flow,
+    capture_flow_state,
     get_cell_center_velocity,
     measure_flow_rates,
     reconstuct_cell_centred_velocities,
@@ -88,3 +90,28 @@ def test_cell_centred_visualization_smoke(monkeypatch):
 
     reconstuct_cell_centred_velocities(grid)
     plt.close("all")
+
+
+def test_animate_flow_writes_gif(tmp_path):
+    """Exercise frame rendering and Pillow GIF finalization end to end."""
+    grid = MACGrid(nx=4, ny=3, width=2.0, height=1.0)
+    grid.u[:] = 1.0
+    grid.v[:] = 0.0
+
+    grid.p[:] = 1.0
+    first = capture_flow_state(grid, time=0.1)
+
+    grid.p[:] = 0.25
+    grid.u[:] = 0.75
+    second = capture_flow_state(grid, time=0.2)
+
+    output = tmp_path / "animation.gif"
+    animate_flow(
+        grid,
+        [first, second],
+        filename=output,
+        fps=5,
+    )
+
+    assert output.exists()
+    assert output.stat().st_size > 0
