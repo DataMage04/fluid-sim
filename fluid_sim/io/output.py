@@ -110,3 +110,24 @@ def write_results_csv(
         writer.writerow(results)
 
     print(f"CSV results written to {file_path}")
+
+
+def write_table_csv(
+    rows: Iterable[Mapping[str, object]],
+    file_path: str | Path,
+) -> None:
+    """Write a sequence of consistently keyed records to a CSV file."""
+    rows = list(rows)
+    if not rows:
+        raise ValueError("Cannot write an empty CSV table.")
+
+    file_path = Path(file_path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = list(rows[0].keys())
+
+    with file_path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print(f"CSV table written to {file_path}")
