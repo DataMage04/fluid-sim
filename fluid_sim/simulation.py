@@ -10,7 +10,9 @@ from fluid_sim.analysis.engineering import (
     EngineeringResults,
     analytical_poiseuille_pressure_gradient,
     compute_engineering_results,
+    streamwise_pressure_profile,
 )
+from fluid_sim.analysis.engineering_plots import plot_streamwise_pressure_profile
 from fluid_sim.analysis.validation import (
     analytical_poiseuille_profile,
     numerical_velocity_profile,
@@ -28,7 +30,12 @@ from fluid_sim.analysis.visualization import (
 )
 from fluid_sim.config import CaseConfig, save_case
 from fluid_sim.core.grid import MACGrid
-from fluid_sim.io.output import TextReport, write_results_csv, write_to_output
+from fluid_sim.io.output import (
+    TextReport,
+    write_results_csv,
+    write_table_csv,
+    write_to_output,
+)
 from fluid_sim.numerics.advection import advect_velocity
 from fluid_sim.numerics.boundary_conditions import apply_boundary_conditions
 from fluid_sim.numerics.diffusion import diffuse_velocity, diffusion_timestep_limit
@@ -288,6 +295,10 @@ def _build_report(
                 ("Maximum speed", f"{eng.max_speed:.6f}", "m/s"),
                 ("Maximum-speed x", f"{eng.max_speed_x:.6f}", "m"),
                 ("Maximum-speed y", f"{eng.max_speed_y:.6f}", "m"),
+                ("Minimum streamwise velocity", f"{eng.min_streamwise_velocity:.6f}", "m/s"),
+                ("Minimum-u x", f"{eng.min_streamwise_velocity_x:.6f}", "m"),
+                ("Minimum-u y", f"{eng.min_streamwise_velocity_y:.6f}", "m"),
+                ("Reverse-flow fluid cells", f"{100.0 * eng.reverse_flow_fraction:.6f}", "%"),
             ]
         )
         if eng.analytical_pressure_drop is not None:
@@ -327,9 +338,11 @@ def _build_report(
     report.add_section("Generated files")
     generated_files = ["output.txt", "resolved_case.json"]
     if engineering_results is not None:
-        generated_files.append("results.csv")
+        generated_files.extend(["results.csv", "pressure_profile.csv"])
     if case.output.save_plots:
         generated_files.extend(["velocity_magnitude.png", "velocity_vectors.png", "pressure.png"])
+        if engineering_results is not None:
+            generated_files.append("pressure_profile.png")
     if case.validation.enabled:
         generated_files.append("poiseuille_validation.png")
     if case.output.save_animation:
@@ -439,6 +452,40 @@ def run_case(case: CaseConfig) -> MACGrid:
         )
 
     engineering_results = _compute_case_engineering_results(grid, case)
+
+    if engineering_results is not None:
+        profile_x, profile_pressure, profile_cp = streamwise_pressure_profile(
+            grid,
+            density=case.fluid.density,
+            reference_velocity=case.inlet.mean_velocity,
+            reference_pressure=case.engineering.reference_pressure,
+        )
+        write_table_csv(
+            [
+                {
+                    "x_m": x_value,
+                    "mean_pressure_Pa": pressure_value,
+                    "mean_Cp": cp_value,
+                }
+                for x_value, pressure_value, cp_value in zip(
+                    profile_x,
+                    profile_pressure,
+                    profile_cp,
+                    strict=True,
+                )
+            ],
+            output_directory / "pressure_profile.csv",
+        )
+
+        if case.output.save_plots:
+            plot_streamwise_pressure_profile(
+                profile_x,
+                profile_pressure,
+                profile_cp,
+                upstream_x=case.engineering.upstream_x,
+                downstream_x=case.engineering.downstream_x,
+                filename=output_directory / "pressure_profile.png",
+            )
 
     if case.output.save_plots:
         plot_velocity_magnitude(grid, output_directory / "velocity_magnitude.png")
