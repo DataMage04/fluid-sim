@@ -78,23 +78,26 @@ def test_grid_convergence_observed_order_is_computed_pairwise():
 
 
 def test_grid_convergence_assessment_recovers_second_order_limit():
+    # Both scalar quantities follow phi(h) = phi_exact + C h^2 and the
+    # three values are close enough to the limiting solution for the
+    # relative-GCI asymptotic ratio to be close to one.
     rows = [
         {
             "label": "coarse",
             "h_m": 0.1,
-            "pressure_drop": 0.14,
+            "pressure_drop": 0.17,
             "max_speed_m_s": 1.46,
         },
         {
             "label": "medium",
             "h_m": 0.05,
-            "pressure_drop": 0.17,
+            "pressure_drop": 0.1775,
             "max_speed_m_s": 1.49,
         },
         {
             "label": "fine",
             "h_m": 0.025,
-            "pressure_drop": 0.1775,
+            "pressure_drop": 0.179375,
             "max_speed_m_s": 1.4975,
         },
     ]
@@ -228,7 +231,7 @@ def test_reprocess_study_uses_existing_summary_without_running_cases(tmp_path, m
             "validation_relative_rmse_percent": 4.0,
             "pressure_drop_relative_error": 0.08,
             "pressure_drop_relative_error_percent": 8.0,
-            "pressure_drop": 0.14,
+            "pressure_drop": 0.17,
             "max_speed_m_s": 1.46,
         },
         {
@@ -241,7 +244,7 @@ def test_reprocess_study_uses_existing_summary_without_running_cases(tmp_path, m
             "validation_relative_rmse_percent": 1.0,
             "pressure_drop_relative_error": 0.02,
             "pressure_drop_relative_error_percent": 2.0,
-            "pressure_drop": 0.17,
+            "pressure_drop": 0.1775,
             "max_speed_m_s": 1.49,
         },
         {
@@ -254,7 +257,7 @@ def test_reprocess_study_uses_existing_summary_without_running_cases(tmp_path, m
             "validation_relative_rmse_percent": 0.25,
             "pressure_drop_relative_error": 0.005,
             "pressure_drop_relative_error_percent": 0.5,
-            "pressure_drop": 0.1775,
+            "pressure_drop": 0.179375,
             "max_speed_m_s": 1.4975,
         },
     ]
