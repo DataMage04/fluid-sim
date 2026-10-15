@@ -1,7 +1,12 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from fluid_sim.core.grid import MACGrid
-from fluid_sim.analysis.visualization import get_cell_center_velocity, measure_flow_rates
+from fluid_sim.analysis.visualization import (
+    get_cell_center_velocity,
+    measure_flow_rates,
+    reconstuct_cell_centred_velocities,
+)
 
 
 def test_get_cell_center_velocity_reconstructs_mac_faces():
@@ -40,3 +45,17 @@ def test_measure_flow_rates_reports_matching_uniform_flow():
     assert "Inlet flow rate" in report[0]
     assert "Outlet flow rate" in report[1]
     assert "0.000000e+00" in report[2]
+
+
+def test_cell_centred_visualization_smoke(monkeypatch):
+    """Exercise Matplotlib's contour stack without running a simulation."""
+    grid = MACGrid(nx=6, ny=4, width=2.0, height=1.0)
+    grid.u[:] = 1.0
+    grid.v[:] = 0.0
+    grid.solid[1:3, 2:4] = True
+
+    # Avoid opening an interactive window during automated tests.
+    monkeypatch.setattr(plt, "show", lambda: None)
+
+    reconstuct_cell_centred_velocities(grid)
+    plt.close("all")
