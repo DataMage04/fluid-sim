@@ -91,10 +91,27 @@ def test_case_rejects_validation_location_outside_domain():
                     "width": 1.0,
                 },
                 "validation": {
+                    "enabled": True,
                     "x_location": 1.5,
                 },
             }
         )
+
+
+def test_disabled_validation_allows_shorter_domain():
+    case = CaseConfig.from_dict(
+        {
+            "domain": {
+                "width": 1.0,
+            },
+            "validation": {
+                "enabled": False,
+            },
+        }
+    )
+
+    assert case.domain.width == 1.0
+    assert case.validation.enabled is False
 
 
 def test_case_rejects_obstacle_outside_domain():
