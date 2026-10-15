@@ -195,23 +195,27 @@ def pressure_force_on_solids(grid) -> tuple[float, float]:
 
     solid_j, solid_i = np.nonzero(grid.solid)
     for j, i in zip(solid_j, solid_i):
-        # Left face: outward solid normal points in -x, so pressure force is +x.
         if i > 0 and not grid.solid[j, i - 1]:
             drag += grid.p[j, i - 1] * grid.dy
-
-        # Right face: outward solid normal points in +x, so pressure force is -x.
         if i < grid.nx - 1 and not grid.solid[j, i + 1]:
             drag -= grid.p[j, i + 1] * grid.dy
-
-        # Bottom face: outward solid normal points in -y, so pressure force is +y.
         if j > 0 and not grid.solid[j - 1, i]:
             lift += grid.p[j - 1, i] * grid.dx
-
-        # Top face: outward solid normal points in +y, so pressure force is -y.
         if j < grid.ny - 1 and not grid.solid[j + 1, i]:
             lift -= grid.p[j + 1, i] * grid.dx
 
     return float(drag), float(lift)
+
+
+def solid_reference_geometry(grid) -> tuple[float, float] | None:
+    """Return projected solid height and rearmost x-face for the solid mask."""
+    if not np.any(grid.solid):
+        return None
+
+    solid_j, solid_i = np.nonzero(grid.solid)
+    projected_height = (int(np.max(solid_j)) - int(np.min(solid_j)) + 1) * grid.dy
+    rear_face_x = (int(np.max(solid_i)) + 1) * grid.dx
+    return float(projected_height), float(rear_face_x)
 
 
 def wake_extent(
@@ -220,11 +224,7 @@ def wake_extent(
     wake_start_x: float,
     velocity_tolerance: float = 1.0e-3,
 ) -> tuple[float, float]:
-    """Return reverse-flow wake length and downstream end location.
-
-    The wake is defined by fluid cells downstream of wake_start_x whose
-    streamwise velocity is more negative than velocity_tolerance.
-    """
+    """Return reverse-flow wake length and downstream end location."""
     if not 0.0 <= wake_start_x <= grid.width:
         raise ValueError("wake_start_x must lie inside the domain.")
     if velocity_tolerance < 0.0:
@@ -257,12 +257,7 @@ def analytical_poiseuille_pressure_gradient(
     if channel_height <= 0.0:
         raise ValueError("Channel height must be positive.")
 
-    return (
-        12.0
-        * dynamic_viscosity
-        * mean_velocity
-        / channel_height**2
-    )
+    return 12.0 * dynamic_viscosity * mean_velocity / channel_height**2
 
 
 def analytical_poiseuille_pressure_drop(
@@ -307,6 +302,14 @@ def compute_engineering_results(
     max_speed, max_speed_x, max_speed_y = maximum_velocity_location(grid)
     min_u, min_u_x, min_u_y, reverse_fraction = reverse_flow_metrics(grid)
 
+    solid_geometry = solid_reference_geometry(grid)
+    if solid_geometry is not None:
+        inferred_length, inferred_wake_start = solid_geometry
+        if reference_length is None:
+            reference_length = inferred_length
+        if wake_start_x is None:
+            wake_start_x = inferred_wake_start
+
     pressure_drag = None
     pressure_lift = None
     pressure_cd = None
@@ -314,7 +317,7 @@ def compute_engineering_results(
     wake_length = None
     wake_end_x = None
 
-    if reference_length is not None:
+    if solid_geometry is not None and reference_length is not None:
         if reference_length <= 0.0:
             raise ValueError("reference_length must be positive.")
         pressure_drag, pressure_lift = pressure_force_on_solids(grid)
@@ -322,7 +325,7 @@ def compute_engineering_results(
         pressure_cd = pressure_drag / force_scale
         pressure_cl = pressure_lift / force_scale
 
-    if wake_start_x is not None:
+    if solid_geometry is not None and wake_start_x is not None:
         wake_length, wake_end_x = wake_extent(
             grid,
             wake_start_x=wake_start_x,
