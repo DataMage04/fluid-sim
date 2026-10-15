@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+import csv
 from pathlib import Path
 
 
@@ -20,13 +21,7 @@ class TextReport:
             self.lines.append(subtitle)
 
     def add_section(self, title: str) -> None:
-        self.lines.extend(
-            [
-                "",
-                title.upper(),
-                "-" * REPORT_WIDTH,
-            ]
-        )
+        self.lines.extend(["", title.upper(), "-" * REPORT_WIDTH])
 
     def add_field(self, label: str, value: object, unit: str = "") -> None:
         suffix = f" {unit}" if unit else ""
@@ -73,9 +68,7 @@ class TextReport:
             return "  ".join(cells)
 
         self.lines.append(format_row(header_values))
-        self.lines.append(
-            "  ".join("-" * width for width in widths)
-        )
+        self.lines.append("  ".join("-" * width for width in widths))
         for row in text_rows:
             self.lines.append(format_row(row))
 
@@ -101,3 +94,19 @@ def write_to_output(
 
     file_path.write_text(text, encoding="utf-8")
     print(f"Output written to {file_path}")
+
+
+def write_results_csv(
+    results: Mapping[str, object],
+    file_path: str | Path,
+) -> None:
+    """Write one completed simulation's scalar results as a one-row CSV."""
+    file_path = Path(file_path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with file_path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(results.keys()))
+        writer.writeheader()
+        writer.writerow(results)
+
+    print(f"CSV results written to {file_path}")
