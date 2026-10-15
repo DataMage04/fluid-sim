@@ -322,7 +322,7 @@ def _build_report(
         )
     else:
         report.add_section("Validation")
-        report.add_lines(["No analytical velocity-profile validation configured for this case."])
+        report.add_lines(["No analytical validation configured for this case."])
 
     report.add_section("Generated files")
     generated_files = ["output.txt", "resolved_case.json"]
@@ -377,6 +377,7 @@ def run_case(case: CaseConfig) -> MACGrid:
     rho = case.fluid.density
     nu = case.fluid.kinematic_viscosity
     dt = case.time.dt
+
     flow_states = []
     divergence_history: list[tuple[int, float, float]] = []
 
@@ -438,11 +439,6 @@ def run_case(case: CaseConfig) -> MACGrid:
         )
 
     engineering_results = _compute_case_engineering_results(grid, case)
-    if engineering_results is not None:
-        write_results_csv(
-            _csv_results(grid, case, engineering_results),
-            output_directory / "results.csv",
-        )
 
     if case.output.save_plots:
         plot_velocity_magnitude(grid, output_directory / "velocity_magnitude.png")
@@ -455,6 +451,12 @@ def run_case(case: CaseConfig) -> MACGrid:
             flow_states,
             filename=output_directory / "flow_animation.gif",
             fps=case.output.animation_fps,
+        )
+
+    if engineering_results is not None:
+        write_results_csv(
+            _csv_results(grid, case, engineering_results),
+            output_directory / "results.csv",
         )
 
     report = _build_report(
