@@ -137,3 +137,61 @@ def test_small_case_runs_without_main_script(tmp_path, monkeypatch):
     saved_case = json.loads(case_snapshot.read_text(encoding="utf-8"))
     assert saved_case["name"] == "smoke"
     assert saved_case["inlet"]["mean_velocity"] == 0.5
+
+
+def test_engineering_case_exports_scalar_and_profile_csv(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    case = CaseConfig.from_dict(
+        {
+            "name": "engineering-smoke",
+            "domain": {
+                "nx": 8,
+                "ny": 4,
+                "width": 2.0,
+                "height": 1.0,
+            },
+            "inlet": {
+                "profile": "uniform",
+                "mean_velocity": 0.5,
+            },
+            "time": {
+                "dt": 0.001,
+                "steps": 1,
+            },
+            "validation": {
+                "enabled": False,
+            },
+            "engineering": {
+                "enabled": True,
+                "upstream_x": 0.25,
+                "downstream_x": 1.75,
+                "sample_width": 0.5,
+                "reference_pressure": 0.0,
+            },
+            "output": {
+                "directory": "results/engineering-smoke",
+                "save_plots": False,
+                "save_animation": False,
+                "show_final_plot": False,
+                "frame_interval": 1,
+                "animation_fps": 20,
+                "diagnostics_interval": 1,
+            },
+        }
+    )
+
+    run_case(case)
+
+    result_directory = tmp_path / "results" / "engineering-smoke"
+    report = (result_directory / "output.txt").read_text(encoding="utf-8")
+    scalar_csv = result_directory / "results.csv"
+    profile_csv = result_directory / "pressure_profile.csv"
+
+    assert scalar_csv.exists()
+    assert profile_csv.exists()
+    assert "Minimum streamwise velocity" in report
+    assert "Reverse-flow fluid cells" in report
+
+    profile_text = profile_csv.read_text(encoding="utf-8")
+    assert "x_m,mean_pressure_Pa,mean_Cp" in profile_text
