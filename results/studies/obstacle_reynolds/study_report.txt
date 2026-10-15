@@ -1,0 +1,33 @@
+==============================================================================
+                          CFD PARAMETER STUDY REPORT                          
+==============================================================================
+Study: obstacle_reynolds (parameter_sweep)
+
+STUDY SETUP
+------------------------------------------------------------------------------
+Base case                        ../obstacle.json
+Number of runs                   4
+Output directory                 results/studies/obstacle_reynolds
+Case plots retained              NO
+Case animations retained         NO
+
+RUN SUMMARY
+------------------------------------------------------------------------------
+Run    Grid       h (m)  Runtime (s)  Vel. RMSE (%)  dP error (%)  Observed p
+----  -----  ----------  -----------  -------------  ------------  ----------
+Re10  60x30  3.3333e-02       182.90              -             -           -
+Re20  60x30  3.3333e-02       241.38              -             -           -
+Re40  60x30  3.3333e-02       219.29              -             -           -
+Re80  60x30  3.3333e-02       160.28              -             -           -
+
+GENERATED FILES
+------------------------------------------------------------------------------
+- summary.csv
+- study_report.txt
+- pressure_drop_vs_reynolds.png
+- pressure_drag_coefficient_vs_reynolds.png
+- wake_length_vs_reynolds.png
+- reverse_flow_fraction_vs_reynolds.png
+- reverse_velocity_vs_reynolds.png
+- max_speed_vs_reynolds.png
+- runs/<label>/...

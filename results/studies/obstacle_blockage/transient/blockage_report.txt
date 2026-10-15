@@ -1,0 +1,35 @@
+==============================================================================
+                       CFD BLOCKAGE-RATIO STUDY REPORT                        
+==============================================================================
+Study: obstacle_blockage
+
+STUDY DESIGN
+------------------------------------------------------------------------------
+Number of blockage cases         5
+Target Reynolds number           40
+Sample interval                  10 steps
+Averaging start fraction         0.600
+Steadiness tolerance             1.000 %
+Obstacle height is varied while the obstacle remains vertically centred.
+Dynamic viscosity and characteristic length are adjusted together so
+the obstacle-based Reynolds number remains Re = 40 for every run.
+
+TIME-AVERAGED BLOCKAGE STUDY
+------------------------------------------------------------------------------
+Run   Beta  H_obs    Re       mu  dP mean  Cd,p mean  Wake mean  Reverse %  u_min mean  Umax mean  Status
+---  -----  -----  ----  -------  -------  ---------  ---------  ---------  ----------  ---------  ------
+B20  0.200  0.200  40.0  0.00500  0.87776    3.21460    0.30000      1.587    -0.11288    1.70757  STEADY
+B30  0.300  0.300  40.0  0.00750  1.62680    4.75512    0.43333      3.036    -0.19261    2.01735  STEADY
+B40  0.400  0.400  40.0  0.01000  2.82310    7.16919    0.50000      4.630    -0.25993    2.36003  STEADY
+B50  0.500  0.500  40.0  0.01250  4.94128   11.42370    0.53333      6.082    -0.34983    2.88889  STEADY
+B60  0.600  0.600  40.0  0.01500  9.20559   19.93435    0.56667      7.565    -0.46415    3.50841  STEADY
+
+STEADINESS ASSESSMENT
+------------------------------------------------------------------------------
+Run   Beta  Max drift (%)  Max fluct. (%)  Average samples  Status
+---  -----  -------------  --------------  ---------------  ------
+B20  0.200         0.0194          0.0127               41  STEADY
+B30  0.300         0.0098          0.0060               41  STEADY
+B40  0.400         0.0034          0.0024               41  STEADY
+B50  0.500         0.0008          0.0010               41  STEADY
+B60  0.600         0.0002          0.0002               41  STEADY

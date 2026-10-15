@@ -1,0 +1,120 @@
+==============================================================================
+                   2D INCOMPRESSIBLE FLOW SIMULATION REPORT                   
+==============================================================================
+Case: poiseuille_grid_convergence_40x20
+
+RUN SUMMARY
+------------------------------------------------------------------------------
+Status                           COMPLETED
+Time steps completed             1000
+Physical time simulated          5.000000 s
+Wall-clock runtime               66.448 s
+Output directory                 results\studies\poiseuille_grid_convergence\runs\40x20
+
+DOMAIN AND GRID
+------------------------------------------------------------------------------
+Domain width                     2 m
+Domain height                    1 m
+Grid cells (nx x ny)             40 x 20
+Cell spacing dx                  5.000000e-02 m
+Cell spacing dy                  5.000000e-02 m
+Fluid cells                      800
+Solid cells                      0
+Solid-cell fraction              0.000 %
+
+FLUID AND BOUNDARY CONDITIONS
+------------------------------------------------------------------------------
+Density                          1 kg/m^3
+Dynamic viscosity                0.01 Pa.s
+Kinematic viscosity              0.01 m^2/s
+Inlet profile                    poiseuille
+Mean inlet velocity              1 m/s
+Characteristic length            0.4 m
+Reynolds number                  40.000
+
+GEOMETRY
+------------------------------------------------------------------------------
+No internal solid obstacles.
+
+TIME INTEGRATION AND STABILITY
+------------------------------------------------------------------------------
+Time step dt                     5.000000e-03 s
+Configured steps                 1000
+Diffusion dt limit               6.250000e-02 s
+dt / diffusion limit             0.080000
+Diffusion number x               0.020000
+Diffusion number y               0.020000
+Combined diffusion number        0.040000
+Explicit diffusion stable        YES
+
+MASS CONSERVATION
+------------------------------------------------------------------------------
+Inlet flow rate                  1.001250000 m^2/s
+Outlet flow rate                 1.001250000 m^2/s
+Flow-rate difference             2.220446e-16 m^2/s
+Relative flow imbalance          2.217674e-14 %
+
+FINAL FLOW FIELD
+------------------------------------------------------------------------------
+Maximum speed                    1.496200 m/s
+Mean speed                       1.001250 m/s
+Minimum pressure                 0.005938 Pa
+Maximum pressure                 0.237534 Pa
+Pressure range                   0.231596 Pa
+
+PRESSURE PROJECTION / CONTINUITY
+------------------------------------------------------------------------------
+Final max |divergence|           4.285946e-15 1/s
+Final RMS divergence             1.497656e-15 1/s
+Step  RMS before  RMS after  Reduction
+----  ----------  ---------  ---------
+100    1.822e-03  1.426e-15  1.278e+12
+200    1.819e-03  1.461e-15  1.245e+12
+300    1.819e-03  1.451e-15  1.253e+12
+400    1.819e-03  1.482e-15  1.227e+12
+500    1.819e-03  1.465e-15  1.242e+12
+600    1.819e-03  1.427e-15  1.275e+12
+700    1.819e-03  1.459e-15  1.247e+12
+800    1.819e-03  1.432e-15  1.270e+12
+900    1.819e-03  1.469e-15  1.238e+12
+1000   1.819e-03  1.498e-15  1.215e+12
+
+ENGINEERING RESULTS
+------------------------------------------------------------------------------
+Upstream sample x                0.250000 m
+Downstream sample x              1.750000 m
+Pressure sample width            0.100000 m
+Mean upstream pressure           0.211320 Pa
+Mean downstream pressure         0.032846 Pa
+Pressure drop                    0.178474 Pa
+Dynamic pressure                 0.500000 Pa
+Upstream Cp                      0.422641
+Downstream Cp                    0.065692
+Pressure-drop coefficient        0.356949
+Maximum speed                    1.496200 m/s
+Maximum-speed x                  0.025000 m
+Maximum-speed y                  0.475000 m
+Minimum streamwise velocity      0.146650 m/s
+Minimum-u x                      0.025000 m
+Minimum-u y                      0.975000 m
+Reverse-flow fluid cells         0.000000 %
+Analytical -dp/dx                0.120000 Pa/m
+Analytical pressure drop         0.180000 Pa
+Pressure-drop relative error     0.847519 %
+
+POISEUILLE VALIDATION
+------------------------------------------------------------------------------
+Profile location                 1.5 m
+Numerical max velocity           1.494861 m/s
+Analytical max velocity          1.496250 m/s
+RMSE                             1.476150e-03 m/s
+Maximum error                    3.099484e-03 m/s
+Relative RMSE                    0.134753 %
+
+GENERATED FILES
+------------------------------------------------------------------------------
+- output.txt
+- resolved_case.json
+- results.csv
+- pressure_profile.csv
+- poiseuille_validation.png

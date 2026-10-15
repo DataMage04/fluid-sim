@@ -1,0 +1,39 @@
+==============================================================================
+                          CFD PARAMETER STUDY REPORT                          
+==============================================================================
+Study: poiseuille_grid_convergence (grid_convergence)
+
+STUDY SETUP
+------------------------------------------------------------------------------
+Base case                        ../poiseuille.json
+Number of runs                   3
+Output directory                 results/studies/poiseuille_grid_convergence
+Case plots retained              NO
+Case animations retained         NO
+
+RUN SUMMARY
+------------------------------------------------------------------------------
+Run     Grid       h (m)  Runtime (s)  Vel. RMSE (%)  dP error (%)  Observed p
+-----  -----  ----------  -----------  -------------  ------------  ----------
+20x10  20x10  1.0000e-01        18.52         0.5045        3.6146           -
+40x20  40x20  5.0000e-02        66.79         0.1348        0.8475       1.905
+80x40  80x40  2.5000e-02       235.20         0.0344        0.2031       1.970
+
+RICHARDSON EXTRAPOLATION / GRID CONVERGENCE INDEX
+------------------------------------------------------------------------------
+Metric             p  Fine value  Extrapolated  GCI fine (%)  Asymptotic ratio
+-------------  -----  ----------  ------------  ------------  ----------------
+pressure_drop  2.102    0.179634      0.179987        0.2451            1.0065
+max_speed_m_s  2.010     1.49906           1.5        0.0786            1.0019
+An asymptotic ratio close to 1 indicates the three grids are in the
+asymptotic convergence range for the reported scalar quantity.
+
+GENERATED FILES
+------------------------------------------------------------------------------
+- summary.csv
+- study_report.txt
+- convergence_summary.csv
+- velocity_error_vs_grid_spacing.png
+- pressure_drop_error_vs_grid_spacing.png
+- runtime_vs_grid_size.png
+- runs/<label>/...

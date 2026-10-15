@@ -1,0 +1,45 @@
+{
+  "name": "poiseuille_grid_convergence_20x10",
+  "fluid": {
+    "density": 1.0,
+    "dynamic_viscosity": 0.01
+  },
+  "domain": {
+    "nx": 20,
+    "ny": 10,
+    "width": 2.0,
+    "height": 1.0
+  },
+  "inlet": {
+    "profile": "poiseuille",
+    "mean_velocity": 1.0
+  },
+  "time": {
+    "dt": 0.005,
+    "steps": 1000
+  },
+  "solver": {
+    "characteristic_length": 0.4
+  },
+  "validation": {
+    "enabled": true,
+    "x_location": 1.5
+  },
+  "engineering": {
+    "enabled": true,
+    "upstream_x": 0.25,
+    "downstream_x": 1.75,
+    "sample_width": 0.1,
+    "reference_pressure": 0.0
+  },
+  "output": {
+    "directory": "results\\studies\\poiseuille_grid_convergence\\runs\\20x10",
+    "save_plots": false,
+    "save_animation": false,
+    "show_final_plot": false,
+    "frame_interval": 5,
+    "animation_fps": 20,
+    "diagnostics_interval": 100
+  },
+  "obstacles": []
+}

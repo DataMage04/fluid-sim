@@ -8,7 +8,7 @@ RUN SUMMARY
 Status                           COMPLETED
 Time steps completed             1000
 Physical time simulated          5.000000 s
-Wall-clock runtime               150.641 s
+Wall-clock runtime               201.144 s
 Output directory                 results/obstacle
 
 DOMAIN AND GRID
@@ -97,6 +97,10 @@ Pressure-drop coefficient        5.646303
 Maximum speed                    2.360031 m/s
 Maximum-speed x                  1.016667 m
 Maximum-speed y                  0.850000 m
+Minimum streamwise velocity      -0.259888 m/s
+Minimum-u x                      1.250000 m
+Minimum-u y                      0.483333 m
+Reverse-flow fluid cells         4.629630 %
 
 VALIDATION
 ------------------------------------------------------------------------------
@@ -107,7 +111,9 @@ GENERATED FILES
 - output.txt
 - resolved_case.json
 - results.csv
+- pressure_profile.csv
 - velocity_magnitude.png
 - velocity_vectors.png
 - pressure.png
+- pressure_profile.png
 - flow_animation.gif

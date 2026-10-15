@@ -1,0 +1,52 @@
+{
+  "name": "obstacle_reynolds_Re40",
+  "fluid": {
+    "density": 1.0,
+    "dynamic_viscosity": 0.01
+  },
+  "domain": {
+    "nx": 60,
+    "ny": 30,
+    "width": 2.0,
+    "height": 1.0
+  },
+  "inlet": {
+    "profile": "uniform",
+    "mean_velocity": 1.0
+  },
+  "time": {
+    "dt": 0.005,
+    "steps": 1000
+  },
+  "solver": {
+    "characteristic_length": 0.4
+  },
+  "validation": {
+    "enabled": false,
+    "x_location": 1.5
+  },
+  "engineering": {
+    "enabled": true,
+    "upstream_x": 0.6,
+    "downstream_x": 1.4,
+    "sample_width": 0.1,
+    "reference_pressure": 0.0
+  },
+  "output": {
+    "directory": "results\\studies\\obstacle_reynolds\\runs\\Re40",
+    "save_plots": false,
+    "save_animation": false,
+    "show_final_plot": false,
+    "frame_interval": 5,
+    "animation_fps": 20,
+    "diagnostics_interval": 100
+  },
+  "obstacles": [
+    {
+      "x_min": 0.8,
+      "x_max": 1.0,
+      "y_min": 0.3,
+      "y_max": 0.7
+    }
+  ]
+}
