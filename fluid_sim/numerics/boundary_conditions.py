@@ -1,12 +1,11 @@
-
 import numpy as np
+
 
 def apply_poiseuille_inlet(grid, mean_velocity):
     """
     Apply a fully developed parabolic velocity profile
     at the left inlet.
     """
-
     y = (np.arange(grid.ny) + 0.5) * grid.dy
     eta = y / grid.height
 
@@ -19,20 +18,37 @@ def apply_poiseuille_inlet(grid, mean_velocity):
 
     grid.u[:, 0] = inlet_profile
 
-def apply_boundary_conditions(grid, inlet_velocity=1.0):
-    """Apply channel, inlet, outlet, and solid-cell conditions."""
 
-    # Inlet: prescribe horizontal velocity.
-    apply_poiseuille_inlet(
-        grid,
-        mean_velocity=1.0
-    )
+def apply_uniform_inlet(grid, velocity):
+    """Apply a uniform horizontal velocity at the left inlet."""
+    grid.u[:, 0] = velocity
+
+
+def apply_boundary_conditions(
+    grid,
+    inlet_velocity=1.0,
+    inlet_profile="poiseuille",
+):
+    """Apply inlet, outlet, wall, and solid-cell conditions."""
+    if inlet_profile == "poiseuille":
+        apply_poiseuille_inlet(
+            grid,
+            mean_velocity=inlet_velocity,
+        )
+    elif inlet_profile == "uniform":
+        apply_uniform_inlet(
+            grid,
+            velocity=inlet_velocity,
+        )
+    else:
+        raise ValueError(
+            "inlet_profile must be either 'poiseuille' or 'uniform'."
+        )
 
     # Outlet: approximate zero horizontal velocity gradient.
     grid.u[:, -1] = grid.u[:, -2]
 
-    # Top and bottom walls:
-    # vertical velocity is zero at the walls.
+    # Top and bottom walls: no normal flow.
     grid.v[0, :] = 0.0
     grid.v[-1, :] = 0.0
 
@@ -41,19 +57,15 @@ def apply_boundary_conditions(grid, inlet_velocity=1.0):
         grid.v[:, 0] = grid.v[:, 1]
         grid.v[:, -1] = grid.v[:, -2]
 
-    # Identify horizontal faces adjacent to solid cells.
     # u[j, i] lies between cells i-1 and i.
     u_blocked = np.zeros_like(grid.u, dtype=bool)
-
     u_blocked[:, 1:-1] = (
         grid.solid[:, :-1]
         | grid.solid[:, 1:]
     )
 
-    # Identify vertical faces adjacent to solid cells.
     # v[j, i] lies between cells j-1 and j.
     v_blocked = np.zeros_like(grid.v, dtype=bool)
-
     v_blocked[1:-1, :] = (
         grid.solid[:-1, :]
         | grid.solid[1:, :]
@@ -63,8 +75,5 @@ def apply_boundary_conditions(grid, inlet_velocity=1.0):
     grid.u[u_blocked] = 0.0
     grid.v[v_blocked] = 0.0
 
-    # Ensure solid cells do not retain pressure values
-    # from previous iterations.
+    # Solid cells do not participate in the pressure solve.
     grid.p[grid.solid] = 0.0
-
-
