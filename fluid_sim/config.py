@@ -104,6 +104,27 @@ class ValidationConfig:
 
 
 @dataclass
+class EngineeringConfig:
+    enabled: bool = False
+    upstream_x: float = 0.25
+    downstream_x: float = 1.75
+    sample_width: float = 0.1
+    reference_pressure: float = 0.0
+
+    def validate(self, domain: DomainConfig) -> None:
+        if not self.enabled:
+            return
+        if self.upstream_x < 0.0 or self.upstream_x > domain.width:
+            raise ValueError("Engineering upstream_x must lie inside the domain.")
+        if self.downstream_x < 0.0 or self.downstream_x > domain.width:
+            raise ValueError("Engineering downstream_x must lie inside the domain.")
+        if self.upstream_x >= self.downstream_x:
+            raise ValueError("Engineering upstream_x must be smaller than downstream_x.")
+        if self.sample_width <= 0.0:
+            raise ValueError("Engineering sample_width must be positive.")
+
+
+@dataclass
 class OutputConfig:
     directory: str = "results/default"
     save_plots: bool = True
@@ -133,6 +154,7 @@ class CaseConfig:
     time: TimeConfig = field(default_factory=TimeConfig)
     solver: SolverConfig = field(default_factory=SolverConfig)
     validation: ValidationConfig = field(default_factory=ValidationConfig)
+    engineering: EngineeringConfig = field(default_factory=EngineeringConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
     obstacles: list[RectangleObstacle] = field(default_factory=list)
 
@@ -157,6 +179,7 @@ class CaseConfig:
         self.time.validate()
         self.solver.validate()
         self.validation.validate()
+        self.engineering.validate(self.domain)
         self.output.validate()
 
         if (
@@ -184,6 +207,7 @@ class CaseConfig:
             time=TimeConfig(**data.get("time", {})),
             solver=SolverConfig(**data.get("solver", {})),
             validation=ValidationConfig(**data.get("validation", {})),
+            engineering=EngineeringConfig(**data.get("engineering", {})),
             output=OutputConfig(**data.get("output", {})),
             obstacles=[
                 RectangleObstacle(**item)
