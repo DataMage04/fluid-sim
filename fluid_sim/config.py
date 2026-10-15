@@ -105,7 +105,7 @@ class ValidationConfig:
 
 @dataclass
 class EngineeringConfig:
-    enabled: bool = True
+    enabled: bool = False
     upstream_x: float = 0.25
     downstream_x: float = 1.75
     sample_width: float = 0.1
