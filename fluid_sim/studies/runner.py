@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from copy import deepcopy
 from math import log
 from pathlib import Path
@@ -202,7 +203,92 @@ def _add_grid_convergence_orders(rows: list[dict[str, object]]) -> None:
         )
 
 
-def _study_report(study: StudyConfig, rows: list[dict[str, object]]) -> str:
+def _three_grid_gci(
+    rows: list[dict[str, object]],
+    metric: str,
+    *,
+    safety_factor: float = 1.25,
+) -> dict[str, object] | None:
+    """Return three-grid Richardson/GCI metrics for one scalar solution quantity.
+
+    The three finest grids are used and must form an approximately constant
+    refinement ratio. Values must converge monotonically for Richardson
+    extrapolation and GCI to be reported.
+    """
+    if len(rows) < 3:
+        return None
+
+    ordered = sorted(rows, key=lambda row: float(row["h_m"]))[:3]
+    fine, medium, coarse = ordered
+
+    try:
+        phi1 = float(fine[metric])
+        phi2 = float(medium[metric])
+        phi3 = float(coarse[metric])
+        h1 = float(fine["h_m"])
+        h2 = float(medium["h_m"])
+        h3 = float(coarse["h_m"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    r21 = h2 / h1
+    r32 = h3 / h2
+    if r21 <= 1.0 or r32 <= 1.0:
+        return None
+    if not np.isclose(r21, r32, rtol=0.05):
+        return None
+
+    eps21 = phi2 - phi1
+    eps32 = phi3 - phi2
+    if eps21 == 0.0 or eps32 == 0.0 or eps21 * eps32 <= 0.0:
+        return None
+
+    p = log(abs(eps32 / eps21)) / log(r21)
+    denominator = r21**p - 1.0
+    if p <= 0.0 or denominator <= 0.0 or phi1 == 0.0 or phi2 == 0.0:
+        return None
+
+    extrapolated = phi1 + (phi1 - phi2) / denominator
+    apparent_error_fine = abs((phi1 - phi2) / phi1)
+    apparent_error_medium = abs((phi2 - phi3) / phi2)
+    gci_fine = safety_factor * apparent_error_fine / denominator
+    gci_medium = safety_factor * apparent_error_medium / denominator
+    asymptotic_ratio = (
+        gci_medium / (gci_fine * r21**p)
+        if gci_fine > 0.0
+        else None
+    )
+
+    return {
+        "metric": metric,
+        "fine_grid": fine["label"],
+        "medium_grid": medium["label"],
+        "coarse_grid": coarse["label"],
+        "refinement_ratio": r21,
+        "observed_order": p,
+        "fine_value": phi1,
+        "richardson_extrapolated": extrapolated,
+        "gci_fine_percent": 100.0 * gci_fine,
+        "gci_medium_percent": 100.0 * gci_medium,
+        "asymptotic_ratio": asymptotic_ratio,
+    }
+
+
+def _grid_convergence_assessment(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Calculate GCI/Richardson results for the main validation quantities."""
+    assessments = []
+    for metric in ("pressure_drop", "max_speed_m_s"):
+        result = _three_grid_gci(rows, metric)
+        if result is not None:
+            assessments.append(result)
+    return assessments
+
+
+def _study_report(
+    study: StudyConfig,
+    rows: list[dict[str, object]],
+    convergence: list[dict[str, object]] | None = None,
+) -> str:
     report = TextReport(
         "CFD PARAMETER STUDY REPORT",
         subtitle=f"Study: {study.name} ({study.kind})",
@@ -224,7 +310,7 @@ def _study_report(study: StudyConfig, rows: list[dict[str, object]]) -> str:
         table_rows.append(
             (
                 row["label"],
-                f"{int(row['nx'])}x{int(row['ny'])}",
+                f"{int(float(row['nx']))}x{int(float(row['ny']))}",
                 f"{float(row['h_m']):.4e}",
                 f"{float(row['runtime_s']):.2f}",
                 (
@@ -258,12 +344,93 @@ def _study_report(study: StudyConfig, rows: list[dict[str, object]]) -> str:
         table_rows,
     )
 
+    if convergence:
+        report.add_section("Richardson extrapolation / Grid Convergence Index")
+        report.add_table(
+            (
+                "Metric",
+                "p",
+                "Fine value",
+                "Extrapolated",
+                "GCI fine (%)",
+                "Asymptotic ratio",
+            ),
+            [
+                (
+                    item["metric"],
+                    f"{float(item['observed_order']):.3f}",
+                    f"{float(item['fine_value']):.6g}",
+                    f"{float(item['richardson_extrapolated']):.6g}",
+                    f"{float(item['gci_fine_percent']):.4f}",
+                    (
+                        f"{float(item['asymptotic_ratio']):.4f}"
+                        if item.get("asymptotic_ratio") is not None
+                        else "-"
+                    ),
+                )
+                for item in convergence
+            ],
+        )
+        report.add_lines(
+            [
+                "An asymptotic ratio close to 1 indicates the three grids are in the",
+                "asymptotic convergence range for the reported scalar quantity.",
+            ]
+        )
+
     report.add_section("Generated files")
     report.add_lines(["- summary.csv", "- study_report.txt"])
+    if convergence:
+        report.add_lines(["- convergence_summary.csv"])
     for plot in study.plots:
         report.add_lines([f"- {plot.filename}"])
     report.add_lines(["- runs/<label>/..."])
     return report.render()
+
+
+def _coerce_csv_value(value: str) -> object:
+    if value == "":
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+
+def _read_summary_csv(path: str | Path) -> list[dict[str, object]]:
+    path = Path(path)
+    with path.open("r", encoding="utf-8", newline="") as file:
+        return [
+            {key: _coerce_csv_value(value) for key, value in row.items()}
+            for row in csv.DictReader(file)
+        ]
+
+
+def _write_study_outputs(
+    study: StudyConfig,
+    rows: list[dict[str, object]],
+    output_directory: Path,
+) -> None:
+    convergence = None
+    if study.kind == "grid_convergence":
+        _add_grid_convergence_orders(rows)
+        convergence = _grid_convergence_assessment(rows)
+
+    write_table_csv(rows, output_directory / "summary.csv")
+
+    if convergence:
+        write_table_csv(convergence, output_directory / "convergence_summary.csv")
+
+    for plot in study.plots:
+        plot_study_metric(rows, plot, output_directory)
+
+    write_to_output(
+        _study_report(study, rows, convergence),
+        output_directory / "study_report.txt",
+    )
 
 
 def run_study(study_path: str | Path) -> list[dict[str, object]]:
@@ -294,17 +461,22 @@ def run_study(study_path: str | Path) -> list[dict[str, object]]:
         row.update(_case_metrics(grid, case, elapsed_seconds=elapsed))
         rows.append(row)
 
-    if study.kind == "grid_convergence":
-        _add_grid_convergence_orders(rows)
+    _write_study_outputs(study, rows, output_directory)
+    return rows
 
-    write_table_csv(rows, output_directory / "summary.csv")
 
-    for plot in study.plots:
-        plot_study_metric(rows, plot, output_directory)
+def reprocess_study(study_path: str | Path) -> list[dict[str, object]]:
+    """Regenerate study analysis from an existing summary.csv without rerunning CFD."""
+    study_path = Path(study_path).resolve()
+    study = load_study(study_path)
+    output_directory = Path(study.output_directory)
+    summary_path = output_directory / "summary.csv"
 
-    write_to_output(
-        _study_report(study, rows),
-        output_directory / "study_report.txt",
-    )
+    if not summary_path.exists():
+        raise FileNotFoundError(
+            f"Cannot reuse results because {summary_path} does not exist."
+        )
 
+    rows = _read_summary_csv(summary_path)
+    _write_study_outputs(study, rows, output_directory)
     return rows
