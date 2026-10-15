@@ -1,0 +1,63 @@
+{
+  "name": "poiseuille_grid_convergence",
+  "kind": "grid_convergence",
+  "base_case": "../poiseuille.json",
+  "output_directory": "results/studies/poiseuille_grid_convergence",
+  "keep_case_plots": false,
+  "keep_case_animation": false,
+  "runs": [
+    {
+      "label": "20x10",
+      "overrides": {
+        "domain.nx": 20,
+        "domain.ny": 10
+      }
+    },
+    {
+      "label": "40x20",
+      "overrides": {
+        "domain.nx": 40,
+        "domain.ny": 20
+      }
+    },
+    {
+      "label": "80x40",
+      "overrides": {
+        "domain.nx": 80,
+        "domain.ny": 40
+      }
+    }
+  ],
+  "plots": [
+    {
+      "x": "h_m",
+      "y": "validation_relative_rmse_percent",
+      "filename": "velocity_error_vs_grid_spacing.png",
+      "title": "Poiseuille Velocity Error vs Grid Spacing",
+      "x_label": "Grid spacing, h (m)",
+      "y_label": "Relative velocity RMSE (%)",
+      "log_x": true,
+      "log_y": true
+    },
+    {
+      "x": "h_m",
+      "y": "pressure_drop_relative_error_percent",
+      "filename": "pressure_drop_error_vs_grid_spacing.png",
+      "title": "Poiseuille Pressure-Drop Error vs Grid Spacing",
+      "x_label": "Grid spacing, h (m)",
+      "y_label": "Pressure-drop relative error (%)",
+      "log_x": true,
+      "log_y": true
+    },
+    {
+      "x": "total_cells",
+      "y": "runtime_s",
+      "filename": "runtime_vs_grid_size.png",
+      "title": "Runtime vs Grid Size",
+      "x_label": "Total grid cells",
+      "y_label": "Wall-clock runtime (s)",
+      "log_x": true,
+      "log_y": true
+    }
+  ]
+}
