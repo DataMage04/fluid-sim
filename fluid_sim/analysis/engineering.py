@@ -28,6 +28,12 @@ class EngineeringResults:
     min_streamwise_velocity_x: float
     min_streamwise_velocity_y: float
     reverse_flow_fraction: float
+    pressure_drag_per_unit_depth: float | None = None
+    pressure_lift_per_unit_depth: float | None = None
+    pressure_drag_coefficient: float | None = None
+    pressure_lift_coefficient: float | None = None
+    wake_length: float | None = None
+    wake_end_x: float | None = None
     analytical_pressure_gradient: float | None = None
     analytical_pressure_drop: float | None = None
     pressure_drop_relative_error: float | None = None
@@ -174,6 +180,72 @@ def reverse_flow_metrics(
     )
 
 
+def pressure_force_on_solids(grid) -> tuple[float, float]:
+    """Integrate pressure force on grid-aligned solid surfaces per unit depth.
+
+    Returns (drag, lift) exerted by the fluid on all internal solid boundaries.
+    Pressure is sampled from the fluid cell immediately adjacent to each
+    solid-fluid interface.
+    """
+    if not np.any(grid.solid):
+        return 0.0, 0.0
+
+    drag = 0.0
+    lift = 0.0
+
+    solid_j, solid_i = np.nonzero(grid.solid)
+    for j, i in zip(solid_j, solid_i):
+        # Left face: outward solid normal points in -x, so pressure force is +x.
+        if i > 0 and not grid.solid[j, i - 1]:
+            drag += grid.p[j, i - 1] * grid.dy
+
+        # Right face: outward solid normal points in +x, so pressure force is -x.
+        if i < grid.nx - 1 and not grid.solid[j, i + 1]:
+            drag -= grid.p[j, i + 1] * grid.dy
+
+        # Bottom face: outward solid normal points in -y, so pressure force is +y.
+        if j > 0 and not grid.solid[j - 1, i]:
+            lift += grid.p[j - 1, i] * grid.dx
+
+        # Top face: outward solid normal points in +y, so pressure force is -y.
+        if j < grid.ny - 1 and not grid.solid[j + 1, i]:
+            lift -= grid.p[j + 1, i] * grid.dx
+
+    return float(drag), float(lift)
+
+
+def wake_extent(
+    grid,
+    *,
+    wake_start_x: float,
+    velocity_tolerance: float = 1.0e-3,
+) -> tuple[float, float]:
+    """Return reverse-flow wake length and downstream end location.
+
+    The wake is defined by fluid cells downstream of wake_start_x whose
+    streamwise velocity is more negative than velocity_tolerance.
+    """
+    if not 0.0 <= wake_start_x <= grid.width:
+        raise ValueError("wake_start_x must lie inside the domain.")
+    if velocity_tolerance < 0.0:
+        raise ValueError("velocity_tolerance cannot be negative.")
+
+    u_center, _ = get_cell_center_velocity(grid)
+    x, _ = grid.cell_centres()
+    reverse = (
+        (~grid.solid)
+        & (x > wake_start_x)
+        & (u_center < -velocity_tolerance)
+    )
+
+    if not np.any(reverse):
+        return 0.0, float(wake_start_x)
+
+    last_center = float(np.max(x[reverse]))
+    wake_end_x = min(grid.width, last_center + 0.5 * grid.dx)
+    return float(wake_end_x - wake_start_x), float(wake_end_x)
+
+
 def analytical_poiseuille_pressure_gradient(
     dynamic_viscosity: float,
     mean_velocity: float,
@@ -220,6 +292,8 @@ def compute_engineering_results(
     sample_width: float,
     reference_pressure: float = 0.0,
     analytical_pressure_gradient: float | None = None,
+    reference_length: float | None = None,
+    wake_start_x: float | None = None,
 ) -> EngineeringResults:
     """Calculate the standard Milestone 9 engineering result set."""
     upstream_pressure, downstream_pressure, delta_p = pressure_drop(
@@ -232,6 +306,28 @@ def compute_engineering_results(
     q = dynamic_pressure(density, reference_velocity)
     max_speed, max_speed_x, max_speed_y = maximum_velocity_location(grid)
     min_u, min_u_x, min_u_y, reverse_fraction = reverse_flow_metrics(grid)
+
+    pressure_drag = None
+    pressure_lift = None
+    pressure_cd = None
+    pressure_cl = None
+    wake_length = None
+    wake_end_x = None
+
+    if reference_length is not None:
+        if reference_length <= 0.0:
+            raise ValueError("reference_length must be positive.")
+        pressure_drag, pressure_lift = pressure_force_on_solids(grid)
+        force_scale = q * reference_length
+        pressure_cd = pressure_drag / force_scale
+        pressure_cl = pressure_lift / force_scale
+
+    if wake_start_x is not None:
+        wake_length, wake_end_x = wake_extent(
+            grid,
+            wake_start_x=wake_start_x,
+            velocity_tolerance=max(1.0e-12, 1.0e-3 * reference_velocity),
+        )
 
     analytical_drop = None
     relative_error = None
@@ -271,6 +367,12 @@ def compute_engineering_results(
         min_streamwise_velocity_x=min_u_x,
         min_streamwise_velocity_y=min_u_y,
         reverse_flow_fraction=reverse_fraction,
+        pressure_drag_per_unit_depth=pressure_drag,
+        pressure_lift_per_unit_depth=pressure_lift,
+        pressure_drag_coefficient=pressure_cd,
+        pressure_lift_coefficient=pressure_cl,
+        wake_length=wake_length,
+        wake_end_x=wake_end_x,
         analytical_pressure_gradient=analytical_pressure_gradient,
         analytical_pressure_drop=analytical_drop,
         pressure_drop_relative_error=relative_error,
