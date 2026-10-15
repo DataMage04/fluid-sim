@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 from fluid_sim.core.grid import MACGrid
 from fluid_sim.analysis.visualization import (
+    _symmetric_pressure_limit,
     get_cell_center_velocity,
     measure_flow_rates,
     reconstuct_cell_centred_velocities,
@@ -45,6 +46,34 @@ def test_measure_flow_rates_reports_matching_uniform_flow():
     assert "Inlet flow rate" in report[0]
     assert "Outlet flow rate" in report[1]
     assert "0.000000e+00" in report[2]
+
+
+def test_pressure_limit_uses_only_fluid_cells():
+    grid = MACGrid(nx=4, ny=3, width=2.0, height=1.5)
+    grid.solid[1, 2] = True
+
+    pressure = np.array(
+        [
+            [0.0, -2.0, 1.0, 0.5],
+            [1.5, 3.0, 1000.0, -1.0],
+            [0.0, 2.0, -0.5, 1.0],
+        ]
+    )
+
+    assert np.isclose(
+        _symmetric_pressure_limit(pressure, grid.solid),
+        3.0,
+    )
+
+
+def test_pressure_limit_falls_back_for_zero_field():
+    grid = MACGrid(nx=4, ny=3, width=2.0, height=1.5)
+    pressure = np.zeros((grid.ny, grid.nx))
+
+    assert np.isclose(
+        _symmetric_pressure_limit(pressure, grid.solid),
+        1.0,
+    )
 
 
 def test_cell_centred_visualization_smoke(monkeypatch):
