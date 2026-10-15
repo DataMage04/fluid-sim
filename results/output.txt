@@ -1,0 +1,36 @@
+RMS Divergence
+Step 100/1000: RMS divergence 2.270e-03 -> 2.202e-15
+Step 200/1000: RMS divergence 2.269e-03 -> 2.221e-15
+Step 300/1000: RMS divergence 2.269e-03 -> 2.138e-15
+Step 400/1000: RMS divergence 2.269e-03 -> 2.160e-15
+Step 500/1000: RMS divergence 2.269e-03 -> 2.181e-15
+Step 600/1000: RMS divergence 2.269e-03 -> 2.272e-15
+Step 700/1000: RMS divergence 2.269e-03 -> 2.152e-15
+Step 800/1000: RMS divergence 2.269e-03 -> 2.193e-15
+Step 900/1000: RMS divergence 2.269e-03 -> 2.236e-15
+Step 1000/1000: RMS divergence 2.269e-03 -> 2.154e-15
+Inlet flow rate:  1.000556
+Outlet flow rate: 1.000556
+Flow rate difference: 0.000000e+00
+Diffusion dt limit:   2.777778e-02 s
+Current dt:            5.000000e-03 s
+Maximum fluid speed: 1.498317 m/s
+Mean fluid speed: 1.000556 m/s
+Density:              1 kg/m^3
+Dynamic viscosity:    0.01 Pa.s
+Kinematic viscosity:  0.01 m^2/s
+Reynolds number:       40.00
+Diffusion number x:   0.0450
+Diffusion number y:   0.0450
+Combined diffusion #: 0.0900
+============POISEUILLE VALIDATION============
+Profile location:      x = 1.500 m
+Numerical max speed:   1.497702 m/s
+Analytical max speed:  1.498333 m/s
+RMSE:                  6.655284e-04 m/s
+Maximum error:         1.474371e-03 m/s
+Relative RMSE:         0.061 %
+=======Errors=======
+rmse: 0.0006655284488013638
+max_error: 0.0014743711911678892
+relative_rmse: 0.0006075412453026927

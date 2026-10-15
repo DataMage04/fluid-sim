@@ -31,6 +31,7 @@ def main():
     # --------------------------------------------
     # 1. Create the simulation domain
     # --------------------------------------------
+    print("Defining grid")
     grid = MACGrid(
         nx=60,
         ny=30,
@@ -79,12 +80,11 @@ def main():
 
     grid.v[:, :] = 0.0
 
-    apply_boundary_conditions(grid, inlet_velocity)
-
     # --------------------------------------------
     # 2. Advance the velocity field
     # --------------------------------------------
 
+    print("Starting simulation...")
     rms_on_steps = {}
     for step in tqdm(range(steps), desc="Simulation Progress"):
 
@@ -159,16 +159,18 @@ def main():
     for rms_step in rms_on_steps.keys():
         data.append(f"{rms_step}: RMS divergence {rms_on_steps[rms_step]}")
 
-    animate_flow(
-        grid,
-        flow_states,
-        filename="flow_animation.gif",
-        fps=20
-    )
+    # animate_flow(
+    #     grid,
+    #     flow_states,
+    #     filename="flow_animation.gif",
+    #     fps=20
+    # )
 
     save_flow_plots(grid)
 
-    measure_flow_rates(grid)
+    flow_rates = measure_flow_rates(grid)
+    for flow in flow_rates:
+        data.append(flow)
 
     diffusion_dt_limit = diffusion_timestep_limit(grid,nu)
 
@@ -232,14 +234,19 @@ def main():
         f"Combined diffusion #: "
         f"{diffusion_number_x + diffusion_number_y:.4f}"
     )
-    errors = validate_poiseuille(
+    errors, poiseuille = validate_poiseuille(
         grid,
         mean_velocity=1.0,
         x_location=1.5
     )
+
+    for p in poiseuille:
+        data.append(p)
+    
     data.append("=======Errors=======")
     for error in errors.keys():
-        data.append(error, ": ",errors[error])
+        data.append(f"{error}: {errors[error]}")
+    
 
     write_to_output(data)
 

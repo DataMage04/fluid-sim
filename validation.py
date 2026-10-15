@@ -78,8 +78,9 @@ def validate_poiseuille(
     grid,
     mean_velocity,
     x_location=1.5,
-    filename="poiseuille_validation.png",
+    filename="results/poiseuille_validation.png",
 ):
+    poiseuille = []
     y, u_numerical = numerical_velocity_profile(
         grid,
         x_location
@@ -96,36 +97,34 @@ def validate_poiseuille(
         u_analytical
     )
 
-    print()
-    print("POISEUILLE VALIDATION")
-    print("----------------------")
+    poiseuille.append("============POISEUILLE VALIDATION============")
 
-    print(
+    poiseuille.append(
         f"Profile location:      "
         f"x = {x_location:.3f} m"
     )
 
-    print(
+    poiseuille.append(
         f"Numerical max speed:   "
         f"{np.max(u_numerical):.6f} m/s"
     )
 
-    print(
+    poiseuille.append(
         f"Analytical max speed:  "
         f"{np.max(u_analytical):.6f} m/s"
     )
 
-    print(
+    poiseuille.append(
         f"RMSE:                  "
         f"{errors['rmse']:.6e} m/s"
     )
 
-    print(
+    poiseuille.append(
         f"Maximum error:         "
         f"{errors['max_error']:.6e} m/s"
     )
 
-    print(
+    poiseuille.append(
         f"Relative RMSE:         "
         f"{100.0 * errors['relative_rmse']:.3f} %"
     )
@@ -172,7 +171,7 @@ def validate_poiseuille(
 
     plt.close(fig)
 
-    return errors
+    return errors, poiseuille
 
 
 

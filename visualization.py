@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
-
+from tqdm import tqdm
 
 def animate_flow(
     grid,
@@ -217,7 +217,6 @@ def animate_flow(
     # ---------------------------------------------------------
     # Create animation
     # ---------------------------------------------------------
-
     animation = FuncAnimation(
         fig,
         update,
@@ -238,13 +237,15 @@ def animate_flow(
 
     plt.close(fig)
 
-def measure_flow_rates(grid):
+def measure_flow_rates(grid) -> list:
     inlet_flow = np.sum(grid.u[:, 0]) * grid.dy
     outlet_flow = np.sum(grid.u[:, -1]) * grid.dy
 
-    print(f"Inlet flow rate:  {inlet_flow:.6f}")
-    print(f"Outlet flow rate: {outlet_flow:.6f}")
-    print(f"Flow rate difference: {outlet_flow - inlet_flow:.6e}")
+    return [
+        f"Inlet flow rate:  {inlet_flow:.6f}",
+        f"Outlet flow rate: {outlet_flow:.6f}",
+        f"Flow rate difference: {outlet_flow - inlet_flow:.6e}"
+        ]
 
 def get_cell_center_velocity(grid):
     """Estimate u and v at cell centres from MAC face velocities."""
