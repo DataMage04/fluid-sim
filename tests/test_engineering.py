@@ -9,6 +9,8 @@ from fluid_sim.analysis.engineering import (
     mean_pressure_in_x_band,
     pressure_coefficient,
     pressure_drop,
+    reverse_flow_metrics,
+    streamwise_pressure_profile,
 )
 from fluid_sim.core.grid import MACGrid
 
@@ -51,6 +53,23 @@ def test_dynamic_pressure_and_pressure_coefficient():
     )
 
 
+def test_streamwise_pressure_profile_ignores_solid_cells():
+    grid = MACGrid(nx=3, ny=2, width=3.0, height=2.0)
+    grid.p[:, :] = np.array([[3.0, 100.0, 1.0], [3.0, 2.0, 1.0]])
+    grid.solid[0, 1] = True
+
+    x, pressure, cp = streamwise_pressure_profile(
+        grid,
+        density=1.0,
+        reference_velocity=2.0,
+        reference_pressure=0.0,
+    )
+
+    assert np.allclose(x, [0.5, 1.5, 2.5])
+    assert np.allclose(pressure, [3.0, 2.0, 1.0])
+    assert np.allclose(cp, [1.5, 1.0, 0.5])
+
+
 def test_maximum_velocity_location_uses_cell_centres():
     grid = MACGrid(nx=3, ny=2, width=3.0, height=2.0)
     grid.u[:] = 0.0
@@ -62,6 +81,23 @@ def test_maximum_velocity_location_uses_cell_centres():
     assert np.isclose(speed, 4.0)
     assert np.isclose(x, 1.5)
     assert np.isclose(y, 1.5)
+
+
+def test_reverse_flow_metrics_detect_negative_streamwise_velocity():
+    grid = MACGrid(nx=3, ny=2, width=3.0, height=2.0)
+    grid.u[:] = 1.0
+    grid.v[:] = 0.0
+
+    # Make the centre cell's reconstructed u velocity negative.
+    grid.u[0, 1] = -2.0
+    grid.u[0, 2] = -2.0
+
+    min_u, x, y, fraction = reverse_flow_metrics(grid)
+
+    assert np.isclose(min_u, -2.0)
+    assert np.isclose(x, 1.5)
+    assert np.isclose(y, 0.5)
+    assert np.isclose(fraction, 1.0 / 6.0)
 
 
 def test_poiseuille_pressure_drop_formula():
@@ -101,3 +137,4 @@ def test_compute_engineering_results_compares_pressure_drop():
     assert np.isclose(results.analytical_pressure_drop, 0.18)
     assert np.isclose(results.pressure_drop_relative_error, 0.0)
     assert np.isclose(results.pressure_drop_coefficient, 0.36)
+    assert np.isclose(results.reverse_flow_fraction, 0.0)
