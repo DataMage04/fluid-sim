@@ -25,6 +25,13 @@
     "enabled": true,
     "x_location": 1.5
   },
+  "engineering": {
+    "enabled": true,
+    "upstream_x": 0.25,
+    "downstream_x": 1.75,
+    "sample_width": 0.1,
+    "reference_pressure": 0.0
+  },
   "output": {
     "directory": "results/poiseuille",
     "save_plots": true,
