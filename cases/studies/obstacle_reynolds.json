@@ -5,6 +5,12 @@
   "output_directory": "results/studies/obstacle_reynolds",
   "keep_case_plots": false,
   "keep_case_animation": false,
+  "transient_analysis": {
+    "sample_interval": 10,
+    "averaging_start_fraction": 0.6,
+    "steadiness_tolerance": 0.01,
+    "minimum_average_samples": 20
+  },
   "runs": [
     {
       "label": "Re10",
