@@ -25,6 +25,13 @@
     "enabled": false,
     "x_location": 1.5
   },
+  "engineering": {
+    "enabled": true,
+    "upstream_x": 0.60,
+    "downstream_x": 1.40,
+    "sample_width": 0.10,
+    "reference_pressure": 0.0
+  },
   "output": {
     "directory": "results/obstacle",
     "save_plots": true,
