@@ -159,7 +159,10 @@ class CaseConfig:
         self.validation.validate()
         self.output.validate()
 
-        if self.validation.x_location > self.domain.width:
+        if (
+            self.validation.enabled
+            and self.validation.x_location > self.domain.width
+        ):
             raise ValueError(
                 "Validation x_location must lie inside the configured domain."
             )
