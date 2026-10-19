@@ -383,6 +383,109 @@ def write_verified_summary(outdir: Path, obstacle_grid_rows, pressure_rows, poi_
         writer.writerows(rows)
 
 
+def verify_study_tables(grid_poiseuille, grid_obstacle, sweep, stations,
+                        benchmark_poiseuille, benchmark_cylinder):
+    """Fail fast if report graphics would misrepresent inconsistent CSV data."""
+    groups = {
+        'grid Poiseuille': grid_poiseuille,
+        'grid obstacle': grid_obstacle,
+        'pressure sweep': sweep,
+        'station comparison': stations,
+        'Poiseuille benchmark': benchmark_poiseuille,
+        'cylinder benchmark': benchmark_cylinder,
+    }
+    for name, rows in groups.items():
+        if not rows:
+            raise ValueError(f'{name} CSV is empty; cannot generate verified figures.')
+
+    def require_close(name, actual, expected, *, rel_tol=2e-7):
+        if not (abs(actual - expected) <= rel_tol * max(abs(expected), 1e-14)):
+            raise ValueError(f'{name} discrepancy: CSV has {actual:g}, '
+                             f'but direct calculation gives {expected:g}.')
+
+    for row in sweep:
+        re = to_float(row['Re'])
+        label = f'pressure sweep Re={re:g}'
+        dp_clear = to_float(row['clear_delta_p_pa'])
+        dp_obstacle = to_float(row['obstacle_delta_p_pa'])
+        excess = to_float(row['excess_delta_p_pa'])
+        require_close(label + ' excess drop', excess, dp_obstacle - dp_clear)
+        if 'dynamic_pressure_pa' in row:
+            q = to_float(row['dynamic_pressure_pa'])
+            require_close(label + ' pressure coefficient',
+                          to_float(row['excess_coefficient']), excess / q)
+        if 'fluid' in row and row['fluid'] != 'water at 20 C':
+            raise ValueError(f'{label} has an unexpected fluid: {row["fluid"]}')
+        if 'density_kg_m3' in row:
+            require_close(label + ' water density', to_float(row['density_kg_m3']), 998.2)
+        if 'dynamic_viscosity_pa_s' in row:
+            require_close(label + ' water viscosity',
+                          to_float(row['dynamic_viscosity_pa_s']), 0.001002)
+        matching = [station for station in stations
+                    if abs(to_float(station['Re']) - re) < 1e-9
+                    and station['pair'] == 'reference']
+        if len(matching) != 1:
+            raise ValueError(f'{label} needs exactly one reference station row.')
+        require_close(label + ' reference station',
+                      to_float(matching[0]['excess_delta_p_pa']), excess)
+
+    for row in benchmark_poiseuille:
+        if 'numerical_delta_p_pa' in row:
+            num = to_float(row['numerical_delta_p_pa'])
+            reference = to_float(row['analytical_delta_p_pa'])
+            require_close('analytical Poiseuille pressure error',
+                          to_float(row['pressure_relative_error']),
+                          abs(num - reference) / abs(reference))
+    for row in benchmark_cylinder:
+        numerical = to_float(row['numerical_dp_coefficient'])
+        published = to_float(row['published_reference_dp_coefficient'])
+        require_close('published cylinder reference deviation',
+                      to_float(row['coefficient_error_percent']),
+                      100 * abs(numerical / published - 1))
+    for row in grid_poiseuille:
+        if 'analytical_pressure_drop_pa' in row:
+            num = to_float(row['pressure_drop_pa'])
+            reference = to_float(row['analytical_pressure_drop_pa'])
+            require_close('grid Poiseuille pressure error',
+                          to_float(row['pressure_relative_error']),
+                          abs(num - reference) / abs(reference))
+    print('Verified numerical consistency of pressure drops, coefficients '
+          'and published-reference deviations against input CSV files.')
+
+
+def write_figure_review_notes(outdir, grid_obstacle, sweep, cyl_rows):
+    obs_rows = sorted(grid_obstacle, key=lambda r: to_float(r['cells']))
+    grid_pct = float('nan')
+    if len(obs_rows) >= 2:
+        coarse = to_float(obs_rows[-2]['pressure_drop_pa'])
+        fine = to_float(obs_rows[-1]['pressure_drop_pa'])
+        grid_pct = 100 * abs(fine - coarse) / abs(coarse)
+    cylinder = max(cyl_rows, key=lambda r: to_float(r['cells']))
+    lines = [
+        'FINAL FIGURE REVIEW — NUMERICAL RESULTS AND LIMITATIONS',
+        '',
+        'All charts in this folder were regenerated from existing study CSV files.',
+        'This script does NOT rerun the CFD solver or independently validate its physics.',
+        'Working fluid: liquid water at 20°C as specified in the input studies.',
+        '',
+        f'Obstacle pressure-drop grid change, two finest meshes: {grid_pct:.3f}%.',
+        'This is a grid sensitivity indicator, not proof of grid independence.',
+        f'Published DFG-inspired cylinder comparison: '
+        f'{to_float(cylinder["coefficient_error_percent"]):.3f}% deviation.',
+        f'Cylinder benchmark mesh count: {len(cyl_rows)}.',
+        'One cylinder mesh cannot demonstrate grid convergence.',
+        'The cylinder geometry is stair-stepped and uses a different outlet treatment.',
+        'Pressure-loss sweep measures excess STATIC pressure drop, not total-pressure loss.',
+        'The pressure-sweep settling PASS flags are screening indicators only.',
+        'The runtime chart reports observed times at different grids/step counts;',
+        'pressure-sweep timing includes BOTH clear and obstructed runs.',
+        '',
+        'For publication, confirm dimensions, legend styles and captions '
+        'against the original input configurations.',
+    ]
+    (outdir / 'FIGURE_REVIEW_NOTES.txt').write_text('\n'.join(lines)+'\n', encoding='utf-8')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Generate final verified engineering plots and computational-domain schematics from completed study CSV files.')
     parser.add_argument('--root', default='results/studies', help='Root directory containing completed study folders.')
@@ -400,6 +503,8 @@ def main():
     poiseuille_bench = read_csv(root / 'benchmark_poiseuille' / 'poiseuille_summary.csv')
     cylinder_bench = read_csv(root / 'benchmark_cylinder' / 'cylinder_summary.csv')
 
+    verify_study_tables(poiseuille_grid, obstacle_grid, pressure_summary,
+                        station_comparisons, poiseuille_bench, cylinder_bench)
     plot_grid_independence(poiseuille_grid, obstacle_grid, outdir)
     plot_pressure_loss_sweep(pressure_summary, station_comparisons, outdir)
     plot_benchmark_results(poiseuille_bench, cylinder_bench, outdir)
@@ -407,6 +512,7 @@ def main():
     draw_obstacle_domain_schematic(outdir)
     draw_cylinder_domain_schematic(outdir)
     write_verified_summary(outdir, obstacle_grid, pressure_summary, poiseuille_bench, cylinder_bench)
+    write_figure_review_notes(outdir, obstacle_grid, pressure_summary, cylinder_bench)
 
     print(f'Final verified engineering plots and schematics saved to: {outdir}')
 
