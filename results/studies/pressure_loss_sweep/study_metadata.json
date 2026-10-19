@@ -1,0 +1,34 @@
+{
+  "fluid": "water at 20 C",
+  "density_kg_m3": 998.2,
+  "dynamic_viscosity_pa_s": 0.001002,
+  "inlet_profile": "uniform for both matched configurations",
+  "reynolds": [
+    20.0,
+    40.0,
+    60.0
+  ],
+  "grid": [
+    80,
+    40
+  ],
+  "dt_s": 25.0,
+  "duration_s": 20000.0,
+  "station_pairs_m": {
+    "near": [
+      0.65,
+      1.25
+    ],
+    "reference": [
+      0.6,
+      1.4
+    ],
+    "far": [
+      0.5,
+      1.5
+    ]
+  },
+  "sample_width_m": 0.1,
+  "explicit_diffusion_dt_limit_s": 155.65743512974052,
+  "interpretation": "Static-pressure differences between matched runs; do not label irreversible total-pressure loss without additional analysis."
+}

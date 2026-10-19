@@ -1,0 +1,45 @@
+{
+  "name": "water20c_Re20_clear",
+  "fluid": {
+    "density": 998.2,
+    "dynamic_viscosity": 0.001002
+  },
+  "domain": {
+    "nx": 80,
+    "ny": 40,
+    "width": 2,
+    "height": 1
+  },
+  "inlet": {
+    "profile": "uniform",
+    "mean_velocity": 5.019034261671008e-05
+  },
+  "time": {
+    "dt": 25.0,
+    "steps": 800
+  },
+  "solver": {
+    "characteristic_length": 0.4
+  },
+  "validation": {
+    "enabled": false,
+    "x_location": 1.5
+  },
+  "engineering": {
+    "enabled": true,
+    "upstream_x": 0.6,
+    "downstream_x": 1.4,
+    "sample_width": 0.1,
+    "reference_pressure": 0
+  },
+  "output": {
+    "directory": "results\\studies\\pressure_loss_sweep\\runs\\Re20_clear",
+    "save_plots": false,
+    "save_animation": false,
+    "show_final_plot": false,
+    "frame_interval": 10,
+    "animation_fps": 20,
+    "diagnostics_interval": 100
+  },
+  "obstacles": []
+}
