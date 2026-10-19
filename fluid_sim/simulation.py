@@ -364,8 +364,13 @@ def _csv_results(
     return data
 
 
-def run_case(case: CaseConfig) -> MACGrid:
-    """Run one configured CFD case and return the final grid."""
+def run_case(case: CaseConfig, *, step_callback=None) -> MACGrid:
+    """Run one configured CFD case and return the final grid.
+
+    An optional step_callback(step_number, physical_time_s, grid) is invoked
+    after each pressure projection for non-invasive engineering studies.
+    The callback must not modify the grid.
+    """
     _validate_case_for_run(case)
 
     output_directory = _output_directory(case)
@@ -412,6 +417,9 @@ def run_case(case: CaseConfig) -> MACGrid:
         solve_pressure(grid, dt, rho=rho)
         project_velocity(grid, dt, rho=rho)
         _, rms_after = divergence_metrics(grid)
+
+        if step_callback is not None:
+            step_callback(step + 1, (step + 1) * dt, grid)
 
         if case.output.save_animation and (
             step % case.output.frame_interval == 0
