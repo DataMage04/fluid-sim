@@ -1,0 +1,12 @@
+{
+  "case": "cases/water20c_obstacle.json",
+  "fluid": "water at 20 C",
+  "density_kg_m3": 998.2,
+  "viscosity_pa_s": 0.001002,
+  "dt_s": 25,
+  "duration_s": 20000,
+  "python": "3.13.16 (tags/v3.13.16:cbc944f, Sep 30 2026, 19:17:50) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "repeats": 1,
+  "note": "Numerical simulation; runtime includes run_case reporting and output writing."
+}

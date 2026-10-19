@@ -1,0 +1,107 @@
+==============================================================================
+                   2D INCOMPRESSIBLE FLOW SIMULATION REPORT                   
+==============================================================================
+Case: water20c_obstacle
+
+RUN SUMMARY
+------------------------------------------------------------------------------
+Status                           COMPLETED
+Time steps completed             800
+Physical time simulated          20000.000000 s
+Wall-clock runtime               342.514 s
+Output directory                 results\studies\water20c_obstacle\runs\80x40_repeat1
+
+DOMAIN AND GRID
+------------------------------------------------------------------------------
+Domain width                     2 m
+Domain height                    1 m
+Grid cells (nx x ny)             80 x 40
+Cell spacing dx                  2.500000e-02 m
+Cell spacing dy                  2.500000e-02 m
+Fluid cells                      3072
+Solid cells                      128
+Solid-cell fraction              4.000 %
+
+FLUID AND BOUNDARY CONDITIONS
+------------------------------------------------------------------------------
+Density                          998.2 kg/m^3
+Dynamic viscosity                0.001002 Pa.s
+Kinematic viscosity              1.00381e-06 m^2/s
+Inlet profile                    uniform
+Mean inlet velocity              0.000100381 m/s
+Characteristic length            0.4 m
+Reynolds number                  40.000
+
+GEOMETRY
+------------------------------------------------------------------------------
+Obstacle   x_min   x_max   y_min   y_max
+--------  ------  ------  ------  ------
+1         0.8000  1.0000  0.3000  0.7000
+Coordinates are in metres.
+
+TIME INTEGRATION AND STABILITY
+------------------------------------------------------------------------------
+Time step dt                     2.500000e+01 s
+Configured steps                 800
+Diffusion dt limit               1.556574e+02 s
+dt / diffusion limit             0.160609
+Diffusion number x               0.040152
+Diffusion number y               0.040152
+Combined diffusion number        0.080305
+Explicit diffusion stable        YES
+
+MASS CONSERVATION
+------------------------------------------------------------------------------
+Inlet flow rate                  0.000100381 m^2/s
+Outlet flow rate                 0.000100381 m^2/s
+Flow-rate difference             5.421011e-20 m^2/s
+Relative flow imbalance          5.400452e-14 %
+
+FINAL FLOW FIELD
+------------------------------------------------------------------------------
+Maximum speed                    0.000240 m/s
+Mean speed                       0.000108 m/s
+Minimum pressure                 -0.000010 Pa
+Maximum pressure                 0.000034 Pa
+Pressure range                   0.000044 Pa
+
+PRESSURE PROJECTION / CONTINUITY
+------------------------------------------------------------------------------
+Final max |divergence|           2.547875e-18 1/s
+Final RMS divergence             4.734973e-19 1/s
+Step  RMS before  RMS after  Reduction
+----  ----------  ---------  ---------
+100    2.889e-05  4.411e-19  6.551e+13
+200    2.929e-05  4.610e-19  6.353e+13
+300    2.975e-05  4.722e-19  6.299e+13
+400    3.002e-05  4.750e-19  6.321e+13
+500    3.010e-05  4.772e-19  6.308e+13
+600    3.007e-05  4.775e-19  6.298e+13
+700    3.004e-05  4.692e-19  6.402e+13
+800    3.001e-05  4.735e-19  6.338e+13
+
+ENGINEERING RESULTS
+------------------------------------------------------------------------------
+Upstream sample x                0.600000 m
+Downstream sample x              1.400000 m
+Pressure sample width            0.100000 m
+Mean upstream pressure           0.000026 Pa
+Mean downstream pressure         -0.000002 Pa
+Pressure drop                    0.000028 Pa
+Dynamic pressure                 0.000005 Pa
+Upstream Cp                      5.138453
+Downstream Cp                    -0.434853
+Pressure-drop coefficient        5.573306
+Maximum speed                    0.000240 m/s
+Maximum-speed x                  1.012500 m
+Maximum-speed y                  0.862500 m
+
+VALIDATION
+------------------------------------------------------------------------------
+No analytical validation configured for this case.
+
+GENERATED FILES
+------------------------------------------------------------------------------
+- output.txt
+- resolved_case.json
+- results.csv
