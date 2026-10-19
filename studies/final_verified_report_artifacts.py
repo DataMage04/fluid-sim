@@ -32,6 +32,8 @@ def save_plot(fig, path: Path):
 
 
 def plot_grid_independence(poiseuille_rows, obstacle_rows, outdir: Path):
+    poiseuille_rows = sorted(poiseuille_rows, key=lambda r: to_float(r['cells']))
+    obstacle_rows = sorted(obstacle_rows, key=lambda r: to_float(r['cells']))
     # pressure error vs cell count (Poiseuille)
     cells = [to_float(r['cells']) for r in poiseuille_rows]
     p_err = [100.0 * to_float(r.get('pressure_relative_error')) for r in poiseuille_rows]
@@ -79,6 +81,7 @@ def plot_grid_independence(poiseuille_rows, obstacle_rows, outdir: Path):
 
 
 def plot_pressure_loss_sweep(summary_rows, station_rows, outdir: Path):
+    summary_rows = sorted(summary_rows, key=lambda r: to_float(r['Re']))
     re_vals = [to_float(r['Re']) for r in summary_rows]
     clear_dp = [1e6 * to_float(r['clear_delta_p_pa']) for r in summary_rows]
     obstacle_dp = [1e6 * to_float(r['obstacle_delta_p_pa']) for r in summary_rows]
@@ -100,7 +103,7 @@ def plot_pressure_loss_sweep(summary_rows, station_rows, outdir: Path):
     ax.plot(re_vals, excess_k, 'o-')
     ax.set_xlabel('Obstacle-height Reynolds number')
     ax.set_ylabel('Excess pressure-drop coefficient (-)')
-    ax.set_title('Additional resistance coefficient versus Reynolds number')
+    ax.set_title('Excess static-pressure-drop coefficient versus Reynolds number')
     ax.grid(True, alpha=0.3)
     save_plot(fig, outdir / 'final_excess_coefficient_vs_reynolds.png')
 
@@ -109,7 +112,8 @@ def plot_pressure_loss_sweep(summary_rows, station_rows, outdir: Path):
         rows = [r for r in station_rows if abs(to_float(r['Re']) - re_target) < 1e-9]
         values = [1e6 * to_float(next(r['excess_delta_p_pa'] for r in rows if r['pair'] == p)) for p in pairs]
         fig, ax = plt.subplots(figsize=(7.2, 4.8))
-        ax.bar(pairs, values)
+        ax.bar(['Near\n0.65–1.25 m', 'Reference\n0.60–1.40 m',
+                'Far\n0.50–1.50 m'], values)
         ax.set_xlabel('Pressure sampling station pair')
         ax.set_ylabel('Additional pressure drop (µPa)')
         ax.set_title(f'Station sensitivity of additional pressure drop at Re = {int(re_target)}')
@@ -118,7 +122,8 @@ def plot_pressure_loss_sweep(summary_rows, station_rows, outdir: Path):
 
 
 def plot_benchmark_results(poi_rows, cyl_rows, outdir: Path):
-    # Poiseuille benchmark summary could reuse same plot but separate verified plot
+    poi_rows = sorted(poi_rows, key=lambda r: to_float(r['cells']))
+    cyl_rows = sorted(cyl_rows, key=lambda r: to_float(r['cells']))
     cells = [to_float(r['cells']) for r in poi_rows]
     v_err = [100.0 * to_float(r['velocity_relative_rmse']) for r in poi_rows]
     p_err = [100.0 * to_float(r['pressure_relative_error']) for r in poi_rows]
@@ -127,60 +132,101 @@ def plot_benchmark_results(poi_rows, cyl_rows, outdir: Path):
     ax.plot(cells, p_err, 's-', label='Pressure-drop error')
     ax.set_xlabel('Grid cells')
     ax.set_ylabel('Relative error (%)')
-    ax.set_title('Verified Poiseuille benchmark error summary')
+    ax.set_title('Analytical Poiseuille benchmark errors (water at 20°C)')
     ax.grid(True, alpha=0.3)
     ax.legend()
     save_plot(fig, outdir / 'verified_poiseuille_benchmark_errors.png')
 
-    cyl_cells = [to_float(r['cells']) for r in cyl_rows]
     computed = [to_float(r['numerical_dp_coefficient']) for r in cyl_rows]
     reference = [to_float(r['published_reference_dp_coefficient']) for r in cyl_rows]
     deviation = [to_float(r['coefficient_error_percent']) for r in cyl_rows]
+    grids = [str(r['mesh']) for r in cyl_rows]
+    if len(cyl_rows) == 1:
+        # A single point cannot demonstrate grid convergence: use paired bars.
+        fig, ax = plt.subplots(figsize=(7.2, 4.8))
+        ax.bar(['Numerical: '+grids[0], 'Published DFG reference'],
+               [computed[0], reference[0]], width=0.65)
+        ax.set_ylabel('Front-to-rear pressure coefficient (-)')
+        ax.set_title('DFG-inspired Re = 20 pressure comparison (single grid)')
+        ax.grid(True, axis='y', alpha=0.3)
+        for i, val in enumerate([computed[0], reference[0]]):
+            ax.annotate(f'{val:.4f}', (i, val), xytext=(0, 6),
+                        textcoords='offset points', ha='center', va='bottom')
+        ax.set_ylim(0, max(computed[0], reference[0]) * 1.2)
+        save_plot(fig, outdir / 'verified_cylinder_benchmark_comparison.png')
 
-    fig, ax = plt.subplots(figsize=(7.2, 4.8))
-    ax.plot(cyl_cells, computed, 'o-', label='Computed')
-    ax.plot(cyl_cells, reference, 's--', label='Published reference')
-    ax.set_xlabel('Grid cells')
-    ax.set_ylabel('Front-to-rear pressure coefficient (-)')
-    ax.set_title('DFG-inspired cylinder benchmark comparison at Re = 20')
-    ax.grid(True, alpha=0.3)
-    ax.legend()
-    save_plot(fig, outdir / 'verified_cylinder_benchmark_comparison.png')
+        fig, ax = plt.subplots(figsize=(7.2, 4.8))
+        ax.bar([grids[0]], [deviation[0]], width=0.45)
+        ax.set_ylabel('Absolute deviation from published reference (%)')
+        ax.set_xlabel('Computed mesh')
+        ax.set_title('DFG-inspired Re = 20 deviation (no grid study yet)')
+        ax.grid(True, axis='y', alpha=0.3)
+        ax.set_ylim(0, deviation[0] * 1.25 if deviation[0] else 1.0)
+        ax.annotate(f'{deviation[0]:.2f}%', (0, deviation[0]),
+                    xytext=(0, 6), textcoords='offset points', ha='center')
+        save_plot(fig, outdir / 'verified_cylinder_benchmark_error.png')
+    else:
+        cells = [to_float(r['cells']) for r in cyl_rows]
+        fig, ax = plt.subplots(figsize=(7.2, 4.8))
+        ax.plot(cells, computed, 'o-', label='Computed')
+        ax.plot(cells, reference, 's--', label='Published reference')
+        ax.set(xlabel='Grid cells', ylabel='Front-to-rear pressure coefficient (-)',
+               title='DFG-inspired cylinder comparison at Re = 20')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        save_plot(fig, outdir / 'verified_cylinder_benchmark_comparison.png')
 
-    fig, ax = plt.subplots(figsize=(7.2, 4.8))
-    ax.plot(cyl_cells, deviation, 'o-')
-    ax.set_xlabel('Grid cells')
-    ax.set_ylabel('Deviation from published reference (%)')
-    ax.set_title('Cylinder benchmark deviation versus grid size')
-    ax.grid(True, alpha=0.3)
-    save_plot(fig, outdir / 'verified_cylinder_benchmark_error.png')
-
+        fig, ax = plt.subplots(figsize=(7.2, 4.8))
+        ax.plot(cells, deviation, 'o-')
+        ax.set(xlabel='Grid cells',
+               ylabel='Absolute deviation from published reference (%)',
+               title='DFG-inspired benchmark deviation by grid size')
+        ax.grid(True, alpha=0.3)
+        save_plot(fig, outdir / 'verified_cylinder_benchmark_error.png')
 
 def plot_final_runtime_summary(poi_grid, obs_grid, pressure_rows, poi_bench, cyl_bench, outdir: Path):
-    labels = []
-    times = []
+    """Observed runtimes with both paired pressure-loss CFD runs counted."""
+    def representative(rows, key='cells'):
+        sorted_rows = sorted(rows, key=lambda r: to_float(r.get(key)))
+        return sorted_rows[(len(sorted_rows) - 1) // 2]
 
-    def pick_mid(rows, name):
-        if not rows:
-            return
-        row = rows[min(len(rows) // 2, len(rows) - 1)]
-        labels.append(name)
-        times.append(to_float(row.get('runtime_s', row.get('obstacle_runtime_s', float('nan')))))
-
-    pick_mid(poi_grid, 'Poiseuille grid study')
-    pick_mid(obs_grid, 'Obstacle grid study')
-    pick_mid(pressure_rows, 'Pressure-loss sweep')
-    pick_mid(poi_bench, 'Poiseuille benchmark')
-    pick_mid(cyl_bench, 'Cylinder benchmark')
-
-    fig, ax = plt.subplots(figsize=(8.2, 5.2))
-    ax.bar(labels, times)
-    ax.set_ylabel('Runtime (s)')
-    ax.set_title('Representative runtimes for verified study components')
-    ax.grid(True, axis='y', alpha=0.3)
-    ax.tick_params(axis='x', rotation=18)
+    selected_poi = representative(poi_grid)
+    selected_obs = representative(obs_grid)
+    selected_bench = representative(poi_bench)
+    selected_cyl = representative(cyl_bench)
+    selected_pair = min(pressure_rows, key=lambda r: abs(to_float(r['Re']) - 40))
+    paired_runtime = (to_float(selected_pair['clear_runtime_s']) +
+                      to_float(selected_pair['obstacle_runtime_s']))
+    datasets = [
+        (f"Poiseuille grid {selected_poi['mesh']} (800 steps)",
+         to_float(selected_poi['runtime_s'])),
+        (f"Obstacle grid {selected_obs['mesh']} (800 steps)",
+         to_float(selected_obs['runtime_s'])),
+        (f"Paired pressure runs Re={to_float(selected_pair['Re']):g} "
+         f"({selected_pair['nx']}×{selected_pair['ny']}; 2 × {selected_pair['steps']} steps)",
+         paired_runtime),
+        (f"Poiseuille benchmark {selected_bench['mesh']} "
+         f"({to_float(selected_bench['physical_duration_s'])/to_float(selected_bench['dt_s']):.0f} steps)",
+         to_float(selected_bench['runtime_s'])),
+        (f"Cylinder benchmark {selected_cyl['mesh']} "
+         f"({to_float(selected_cyl['physical_duration_s'])/to_float(selected_cyl['dt_s']):.0f} steps)",
+         to_float(selected_cyl['runtime_s'])),
+    ]
+    fig, ax = plt.subplots(figsize=(10.5, 5.4))
+    labels = [d[0] for d in datasets]
+    durations = [d[1] / 60 for d in datasets]
+    ax.barh(labels[::-1], durations[::-1], height=0.65)
+    ax.set_xlabel('Observed wall-clock runtime (minutes)')
+    ax.set_title('Recorded computational costs (different grids and step counts)')
+    ax.grid(True, axis='x', alpha=0.3)
+    ax.set_xlim(0, max(durations) * 1.18)
+    for i, val in enumerate(durations[::-1]):
+        ax.annotate(f'{val:.1f} min', (val, i),
+                    xytext=(5, 0), textcoords='offset points', va='center')
+    fig.text(0.02, 0.015, 'Runs have different grids, timesteps and durations; '
+             'do not use this chart to infer speedup or computational scaling.',
+             fontsize=8, color='0.35')
     save_plot(fig, outdir / 'runtime_summary_bar_chart.png')
-
 
 def draw_obstacle_domain_schematic(outdir: Path):
     """Dimensioned engineering channel schematic with readable station labels.
@@ -291,7 +337,7 @@ def write_verified_summary(outdir: Path, obstacle_grid_rows, pressure_rows, poi_
     ]
     rows = []
     if obstacle_grid_rows:
-        final_obs = obstacle_grid_rows[-1]
+        final_obs = max(obstacle_grid_rows, key=lambda r: to_float(r['cells']))
         rows.append({
             'category': 'Grid refinement',
             'selected_case': final_obs.get('mesh', 'n/a'),
@@ -310,7 +356,7 @@ def write_verified_summary(outdir: Path, obstacle_grid_rows, pressure_rows, poi_
             'notes': f"Excess coefficient = {to_float(r.get('excess_coefficient')):.4f}"
         })
     if poi_bench_rows:
-        best_poi = poi_bench_rows[-1]
+        best_poi = max(poi_bench_rows, key=lambda r: to_float(r['cells']))
         rows.append({
             'category': 'Benchmark verification',
             'selected_case': best_poi.get('mesh', 'n/a'),
@@ -320,7 +366,7 @@ def write_verified_summary(outdir: Path, obstacle_grid_rows, pressure_rows, poi_
             'notes': 'Analytical benchmark'
         })
     if cyl_bench_rows:
-        best_cyl = cyl_bench_rows[-1]
+        best_cyl = max(cyl_bench_rows, key=lambda r: to_float(r['cells']))
         rows.append({
             'category': 'Benchmark comparison',
             'selected_case': best_cyl.get('mesh', 'n/a'),
