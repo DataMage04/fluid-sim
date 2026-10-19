@@ -183,73 +183,104 @@ def plot_final_runtime_summary(poi_grid, obs_grid, pressure_rows, poi_bench, cyl
 
 
 def draw_obstacle_domain_schematic(outdir: Path):
-    fig, ax = plt.subplots(figsize=(11, 4.5))
-    domain = Rectangle((0, 0), 2.0, 1.0, fill=False, linewidth=2)
-    obstacle = Rectangle((0.8, 0.3), 0.2, 0.4, facecolor='0.75', edgecolor='black')
-    ax.add_patch(domain)
-    ax.add_patch(obstacle)
+    """Dimensioned engineering channel schematic with readable station labels.
 
-    # pressure sampling bands
-    band_w = 0.1
-    x_pairs = [('near', 0.65, 1.25), ('reference', 0.60, 1.40), ('far', 0.50, 1.50)]
-    for label, xu, xd in x_pairs:
-        ax.add_patch(Rectangle((xu - band_w/2, 0), band_w, 1.0, fill=False, linestyle='--', linewidth=1.1))
-        ax.add_patch(Rectangle((xd - band_w/2, 0), band_w, 1.0, fill=False, linestyle='--', linewidth=1.1))
-        ax.text(xu, 1.03, f'{label}\nupstream', ha='center', va='bottom', fontsize=9)
-        ax.text(xd, 1.03, f'{label}\ndownstream', ha='center', va='bottom', fontsize=9)
-
-    # inlet / outlet arrows
-    ax.annotate('', xy=(0.12, 0.5), xytext=(-0.18, 0.5), arrowprops=dict(arrowstyle='->', lw=2))
-    ax.text(-0.2, 0.62, 'Uniform inlet\nwater at 20°C', ha='left', va='center', fontsize=10)
-    ax.annotate('', xy=(2.18, 0.5), xytext=(2.02, 0.5), arrowprops=dict(arrowstyle='->', lw=2))
-    ax.text(2.04, 0.62, 'Outlet\nreference pressure', ha='left', va='center', fontsize=10)
-
-    # dimensions
-    ax.annotate('', xy=(0, -0.08), xytext=(2.0, -0.08), arrowprops=dict(arrowstyle='<->', lw=1.2))
-    ax.text(1.0, -0.12, '2.0 m', ha='center', va='top')
-    ax.annotate('', xy=(-0.08, 0), xytext=(-0.08, 1.0), arrowprops=dict(arrowstyle='<->', lw=1.2))
-    ax.text(-0.11, 0.5, '1.0 m', rotation=90, ha='right', va='center')
-
-    ax.annotate('', xy=(0.8, 0.27), xytext=(1.0, 0.27), arrowprops=dict(arrowstyle='<->', lw=1.1))
-    ax.text(0.9, 0.24, '0.2 m', ha='center', va='top', fontsize=9)
-    ax.annotate('', xy=(1.03, 0.3), xytext=(1.03, 0.7), arrowprops=dict(arrowstyle='<->', lw=1.1))
-    ax.text(1.06, 0.5, '0.4 m', rotation=90, ha='left', va='center', fontsize=9)
-
-    ax.text(0.9, 0.5, 'Rectangular\nobstruction', ha='center', va='center', fontsize=10)
-    ax.set_xlim(-0.25, 2.28)
-    ax.set_ylim(-0.18, 1.15)
-    ax.set_aspect('equal')
-    ax.axis('off')
-    ax.set_title('Computational domain schematic for the engineering obstacle case')
+    Draw only the reference sampling pair: three overlapping pairs cannot be
+    legibly labelled at this scale. Other station coordinates appear below.
+    """
+    fig, ax = plt.subplots(figsize=(12.5, 6.0))
+    ax.add_patch(Rectangle((0, 0), 2.0, 1.0,
+                           facecolor='0.98', edgecolor='black', linewidth=1.7))
+    ax.add_patch(Rectangle((0.8, 0.3), 0.2, 0.4,
+                           facecolor='0.65', edgecolor='black', linewidth=1.3))
+    for x, label in ((0.60, 'Upstream\nx = 0.60 m'),
+                     (1.40, 'Downstream\nx = 1.40 m')):
+        ax.add_patch(Rectangle((x - 0.05, 0), 0.10, 1.0,
+                               fill=False, linestyle='--', linewidth=1.8,
+                               edgecolor='tab:blue'))
+        ax.annotate(label, xy=(x, 1.00), xytext=(x, 1.12),
+                    ha='center', va='bottom', fontsize=10,
+                    arrowprops=dict(arrowstyle='-', lw=0.9, color='0.35'))
+    ax.text(0.90, 0.52, 'Solid', ha='center', va='center',
+            fontsize=9, rotation=90)
+    ax.annotate('', xy=(0, 0.5), xytext=(-0.40, 0.5),
+                arrowprops=dict(arrowstyle='->', lw=1.8))
+    ax.text(-0.43, 0.69, 'Uniform inlet\nWater at 20°C', fontsize=10,
+            ha='left', va='bottom')
+    ax.annotate('', xy=(2.40, 0.5), xytext=(2.0, 0.5),
+                arrowprops=dict(arrowstyle='->', lw=1.8))
+    ax.text(2.04, 0.69, 'Outlet', fontsize=10, ha='left', va='bottom')
+    ax.annotate('', xy=(0, -0.09), xytext=(2.0, -0.09),
+                arrowprops=dict(arrowstyle='<->', lw=1.2))
+    ax.text(1.0, -0.12, 'Channel length: 2.00 m', fontsize=10,
+            ha='center', va='top')
+    ax.annotate('', xy=(-0.10, 0.0), xytext=(-0.10, 1.0),
+                arrowprops=dict(arrowstyle='<->', lw=1.2))
+    ax.text(-0.14, 0.5, '1.00 m', fontsize=10, rotation=90,
+            ha='right', va='center')
+    ax.text(1.0, -0.28,
+            'Other sampling pairs (upstream → downstream): near 0.65 → 1.25 m; '
+            'far 0.50 → 1.50 m',
+            fontsize=9.5, ha='center', va='top')
+    ax.text(1.0, -0.36, 'Solid block: x = 0.80–1.00 m, y = 0.30–0.70 m | '
+            'Sampling-band width = 0.10 m',
+            fontsize=9, ha='center', va='top', color='0.35')
+    ax.set(xlim=(-0.48, 2.48), ylim=(-0.46, 1.34))
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_axis_off()
+    ax.set_title('Computational domain: rectangular-obstacle pressure-loss study',
+                 fontsize=13, pad=18)
     save_plot(fig, outdir / 'computational_domain_schematic_obstacle.png')
 
 
 def draw_cylinder_domain_schematic(outdir: Path):
-    fig, ax = plt.subplots(figsize=(11, 3.4))
-    domain = Rectangle((0, 0), 2.2, 0.41, fill=False, linewidth=2)
-    cyl = Circle((0.2, 0.2), 0.05, facecolor='0.75', edgecolor='black')
-    ax.add_patch(domain)
-    ax.add_patch(cyl)
+    """Full DFG-inspired channel at scale plus a separate enlarged cylinder."""
+    fig, (ax, detail) = plt.subplots(
+        1, 2, figsize=(14, 5.3),
+        gridspec_kw={'width_ratios': [3.9, 1.5]})
+    ax.add_patch(Rectangle((0, 0), 2.2, 0.41,
+                           facecolor='0.98', edgecolor='black', linewidth=1.6))
+    ax.add_patch(Circle((0.2, 0.2), 0.05,
+                        facecolor='0.65', edgecolor='black', linewidth=1.2))
+    ax.add_patch(Rectangle((0.09, 0.09), 0.22, 0.22, fill=False,
+                           edgecolor='tab:blue', linestyle='--', linewidth=1.3))
+    ax.annotate('', xy=(0.0, 0.205), xytext=(-0.25, 0.205),
+                arrowprops=dict(arrowstyle='->', lw=1.8))
+    ax.text(0.02, 0.62, 'Parabolic inlet, water at 20°C',
+            ha='left', va='bottom', fontsize=10)
+    ax.annotate('', xy=(2.42, 0.205), xytext=(2.2, 0.205),
+                arrowprops=dict(arrowstyle='->', lw=1.8))
+    ax.text(2.21, 0.32, 'Outlet', ha='left', va='bottom', fontsize=10)
+    ax.annotate('', xy=(0.0, -0.065), xytext=(2.2, -0.065),
+                arrowprops=dict(arrowstyle='<->', lw=1.2))
+    ax.text(1.1, -0.09, 'Channel length: 2.20 m', ha='center', va='top')
+    ax.annotate('', xy=(-0.07, 0), xytext=(-0.07, 0.41),
+                arrowprops=dict(arrowstyle='<->', lw=1.2))
+    ax.text(-0.11, 0.205, '0.41 m', rotation=90, ha='right', va='center')
+    ax.text(1.1, 0.47, 'Circle centred at (0.20, 0.20) m; see enlargement →',
+            fontsize=10, ha='center')
+    ax.set(xlim=(-0.31, 2.49), ylim=(-0.15, 0.72))
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_axis_off()
+    ax.set_title('Full computational domain', fontsize=12, pad=15)
 
-    ax.annotate('', xy=(0.12, 0.205), xytext=(-0.18, 0.205), arrowprops=dict(arrowstyle='->', lw=2))
-    ax.text(-0.2, 0.30, 'Parabolic inlet\nbenchmark case', ha='left', va='center', fontsize=10)
-    ax.annotate('', xy=(2.32, 0.205), xytext=(2.2, 0.205), arrowprops=dict(arrowstyle='->', lw=2))
-
-    ax.annotate('', xy=(0, -0.05), xytext=(2.2, -0.05), arrowprops=dict(arrowstyle='<->', lw=1.2))
-    ax.text(1.1, -0.07, '2.2 m', ha='center', va='top')
-    ax.annotate('', xy=(-0.05, 0), xytext=(-0.05, 0.41), arrowprops=dict(arrowstyle='<->', lw=1.2))
-    ax.text(-0.08, 0.205, '0.41 m', rotation=90, ha='right', va='center')
-
-    ax.annotate('', xy=(0.15, 0.2), xytext=(0.25, 0.2), arrowprops=dict(arrowstyle='<->', lw=1.1))
-    ax.text(0.2, 0.215, 'D = 0.1 m', ha='center', va='bottom', fontsize=9)
-    ax.text(0.2, 0.2, 'Cylinder', ha='center', va='center', fontsize=10)
-    ax.text(0.2, 0.11, '(0.2, 0.2)', ha='center', va='top', fontsize=9)
-
-    ax.set_xlim(-0.25, 2.35)
-    ax.set_ylim(-0.10, 0.47)
-    ax.set_aspect('equal')
-    ax.axis('off')
-    ax.set_title('Computational domain schematic for the DFG-inspired cylinder benchmark')
+    detail.add_patch(Circle((0.2, 0.2), 0.05,
+                            facecolor='0.65', edgecolor='black', linewidth=1.5))
+    detail.scatter([0.15, 0.25], [0.2, 0.2], s=30,
+                   marker='o', zorder=4, color='tab:blue')
+    detail.annotate('Front pressure', xy=(0.15, 0.2),
+                    xytext=(0.105, 0.295), ha='left', va='bottom', fontsize=9,
+                    arrowprops=dict(arrowstyle='->', lw=1.1))
+    detail.annotate('Rear pressure', xy=(0.25, 0.2),
+                    xytext=(0.285, 0.13), ha='center', va='top', fontsize=9,
+                    arrowprops=dict(arrowstyle='->', lw=1.1))
+    detail.text(0.2, 0.105, 'D = 0.10 m', ha='center', va='center', fontsize=10)
+    detail.set(xlim=(0.085, 0.32), ylim=(0.085, 0.34))
+    detail.set_aspect('equal', adjustable='box')
+    detail.set_axis_off()
+    detail.set_title('Cylinder and pressure probes (enlarged)', fontsize=12, pad=15)
+    fig.suptitle('DFG 2D-1-inspired benchmark geometry, Re = 20',
+                 fontsize=14, y=0.98)
     save_plot(fig, outdir / 'computational_domain_schematic_cylinder.png')
 
 
