@@ -1,0 +1,104 @@
+==============================================================================
+                   2D INCOMPRESSIBLE FLOW SIMULATION REPORT                   
+==============================================================================
+Case: water20c_Re40_clear
+
+RUN SUMMARY
+------------------------------------------------------------------------------
+Status                           COMPLETED
+Time steps completed             800
+Physical time simulated          20000.000000 s
+Wall-clock runtime               390.039 s
+Output directory                 results\studies\pressure_loss_Re40\runs\Re40_clear
+
+DOMAIN AND GRID
+------------------------------------------------------------------------------
+Domain width                     2 m
+Domain height                    1 m
+Grid cells (nx x ny)             80 x 40
+Cell spacing dx                  2.500000e-02 m
+Cell spacing dy                  2.500000e-02 m
+Fluid cells                      3200
+Solid cells                      0
+Solid-cell fraction              0.000 %
+
+FLUID AND BOUNDARY CONDITIONS
+------------------------------------------------------------------------------
+Density                          998.2 kg/m^3
+Dynamic viscosity                0.001002 Pa.s
+Kinematic viscosity              1.00381e-06 m^2/s
+Inlet profile                    uniform
+Mean inlet velocity              0.000100381 m/s
+Characteristic length            0.4 m
+Reynolds number                  40.000
+
+GEOMETRY
+------------------------------------------------------------------------------
+No internal solid obstacles.
+
+TIME INTEGRATION AND STABILITY
+------------------------------------------------------------------------------
+Time step dt                     2.500000e+01 s
+Configured steps                 800
+Diffusion dt limit               1.556574e+02 s
+dt / diffusion limit             0.160609
+Diffusion number x               0.040152
+Diffusion number y               0.040152
+Combined diffusion number        0.080305
+Explicit diffusion stable        YES
+
+MASS CONSERVATION
+------------------------------------------------------------------------------
+Inlet flow rate                  0.000100381 m^2/s
+Outlet flow rate                 0.000100381 m^2/s
+Flow-rate difference             2.710505e-20 m^2/s
+Relative flow imbalance          2.700226e-14 %
+
+FINAL FLOW FIELD
+------------------------------------------------------------------------------
+Maximum speed                    0.000140 m/s
+Mean speed                       0.000101 m/s
+Minimum pressure                 0.000000 Pa
+Maximum pressure                 0.000011 Pa
+Pressure range                   0.000011 Pa
+
+PRESSURE PROJECTION / CONTINUITY
+------------------------------------------------------------------------------
+Final max |divergence|           1.041851e-18 1/s
+Final RMS divergence             3.070125e-19 1/s
+Step  RMS before  RMS after  Reduction
+----  ----------  ---------  ---------
+100    8.650e-06  2.290e-19  3.777e+13
+200    8.659e-06  2.148e-19  4.032e+13
+300    8.661e-06  3.074e-19  2.818e+13
+400    8.662e-06  3.077e-19  2.815e+13
+500    8.662e-06  3.082e-19  2.810e+13
+600    8.662e-06  3.098e-19  2.796e+13
+700    8.662e-06  3.216e-19  2.693e+13
+800    8.662e-06  3.070e-19  2.821e+13
+
+ENGINEERING RESULTS
+------------------------------------------------------------------------------
+Upstream sample x                0.600000 m
+Downstream sample x              1.400000 m
+Pressure sample width            0.100000 m
+Mean upstream pressure           0.000002 Pa
+Mean downstream pressure         0.000001 Pa
+Pressure drop                    0.000002 Pa
+Dynamic pressure                 0.000005 Pa
+Upstream Cp                      0.484375
+Downstream Cp                    0.178656
+Pressure-drop coefficient        0.305718
+Maximum speed                    0.000140 m/s
+Maximum-speed x                  1.987500 m
+Maximum-speed y                  0.512500 m
+
+VALIDATION
+------------------------------------------------------------------------------
+No analytical validation configured for this case.
+
+GENERATED FILES
+------------------------------------------------------------------------------
+- output.txt
+- resolved_case.json
+- results.csv
