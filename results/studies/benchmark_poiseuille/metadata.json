@@ -1,0 +1,26 @@
+{
+  "fluid": "water at 20 C",
+  "rho_kg_m3": 998.2,
+  "mu_pa_s": 0.001002,
+  "dt_s": 10.0,
+  "duration_s": 12000.0,
+  "mode": "poiseuille",
+  "meshes": [
+    [
+      40,
+      20
+    ],
+    [
+      80,
+      40
+    ],
+    [
+      160,
+      80
+    ]
+  ],
+  "published_source": "https://wwwold.mathematik.tu-dortmund.de/~featflow/en/benchmarks/cfdbenchmarking/flow/dfg_benchmark1_re20.html",
+  "published_kinematic_dp": 0.11752016697,
+  "published_dp_coefficient": 5.876008348499999,
+  "caveat": "Staircase circle; outlet differs; surface pressure extrapolated; drag and lift NOT calculated."
+}
