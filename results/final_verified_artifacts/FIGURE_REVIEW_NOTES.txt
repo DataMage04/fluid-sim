@@ -1,0 +1,18 @@
+FINAL FIGURE REVIEW — NUMERICAL RESULTS AND LIMITATIONS
+
+All charts in this folder were regenerated from existing study CSV files.
+This script does NOT rerun the CFD solver or independently validate its physics.
+Working fluid: liquid water at 20°C as specified in the input studies.
+
+Obstacle pressure-drop grid change, two finest meshes: 4.314%.
+This is a grid sensitivity indicator, not proof of grid independence.
+Published DFG-inspired cylinder comparison: 11.971% deviation.
+Cylinder benchmark mesh count: 1.
+One cylinder mesh cannot demonstrate grid convergence.
+The cylinder geometry is stair-stepped and uses a different outlet treatment.
+Pressure-loss sweep measures excess STATIC pressure drop, not total-pressure loss.
+The pressure-sweep settling PASS flags are screening indicators only.
+The runtime chart reports observed times at different grids/step counts;
+pressure-sweep timing includes BOTH clear and obstructed runs.
+
+For publication, confirm dimensions, legend styles and captions against the original input configurations.
