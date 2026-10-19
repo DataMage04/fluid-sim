@@ -45,11 +45,11 @@ class MACGrid:
         Coordinates are specified in metres.
         """
 
-        i_start = max(0, int(x_min / self.dx))
-        i_end = min(self.nx, int(x_max / self.dx))
+        i_start = max(0, int(round(x_min / self.dx)))
+        i_end = min(self.nx, int(round(x_max / self.dx)))
 
-        j_start = max(0, int(y_min / self.dy))
-        j_end = min(self.ny, int(y_max / self.dy))
+        j_start = max(0, int(round(y_min / self.dy)))
+        j_end = min(self.ny, int(round(y_max / self.dy)))
 
         if i_start >= i_end or j_start >= j_end:
             raise ValueError(
