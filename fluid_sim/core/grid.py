@@ -58,6 +58,25 @@ class MACGrid:
 
         self.solid[j_start:j_end, i_start:i_end] = True
 
+
+    def add_circle(self, x_center, y_center, radius):
+        """Mark pressure cells inside a circle as solid.
+
+        Cell-centre rasterisation gives a staircase representation of the
+        surface; it is NOT a boundary-fitted circular mesh. Convergence of
+        surface-sensitive benchmark quantities must be checked separately.
+        """
+        if radius <= 0.0:
+            raise ValueError("Circle radius must be positive.")
+        if not (0.0 < x_center - radius and x_center + radius < self.width
+                and 0.0 < y_center - radius and y_center + radius < self.height):
+            raise ValueError("The circle must be strictly inside the channel.")
+        x, y = self.cell_centres()
+        mask = (x - x_center)**2 + (y - y_center)**2 <= radius**2
+        if not np.any(mask):
+            raise ValueError("The grid is too coarse to represent the circle.")
+        self.solid |= mask
+
     def cell_centres(self):
         """Return the x and y coordinates of pressure cells."""
 
