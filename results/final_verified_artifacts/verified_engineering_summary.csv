@@ -1,0 +1,7 @@
+category,selected_case,key_metric,value,units,notes
+Grid refinement,160x80,Obstacle pressure drop,26.819367654005067,µPa,Highest-resolution engineering obstacle case from grid study
+Pressure-loss sweep,Re 20,Additional pressure drop due to obstacle,8.437752957246946,µPa,Excess coefficient = 6.7112
+Pressure-loss sweep,Re 40,Additional pressure drop due to obstacle,26.49107874098408,µPa,Excess coefficient = 5.2676
+Pressure-loss sweep,Re 60,Additional pressure drop due to obstacle,55.83517799602789,µPa,Excess coefficient = 4.9344
+Benchmark verification,160x80,Poiseuille pressure-drop relative error,0.04497732678641607,%,Analytical benchmark
+Benchmark comparison,110x41,Cylinder pressure-coefficient deviation,11.971143958307929,%,Relative to published DFG-inspired reference
