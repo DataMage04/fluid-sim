@@ -1,0 +1,45 @@
+{
+  "name": "water20c_poiseuille",
+  "fluid": {
+    "density": 998.2,
+    "dynamic_viscosity": 0.001002
+  },
+  "domain": {
+    "nx": 80,
+    "ny": 40,
+    "width": 2,
+    "height": 1
+  },
+  "inlet": {
+    "profile": "poiseuille",
+    "mean_velocity": 0.000100380685233
+  },
+  "time": {
+    "dt": 25,
+    "steps": 800
+  },
+  "solver": {
+    "characteristic_length": 0.4
+  },
+  "validation": {
+    "enabled": true,
+    "x_location": 1.5
+  },
+  "engineering": {
+    "enabled": true,
+    "upstream_x": 0.25,
+    "downstream_x": 1.75,
+    "sample_width": 0.1,
+    "reference_pressure": 0
+  },
+  "output": {
+    "directory": "results\\studies\\water20c_poiseuille\\runs\\80x40_repeat1",
+    "save_plots": false,
+    "save_animation": false,
+    "show_final_plot": false,
+    "frame_interval": 10,
+    "animation_fps": 20,
+    "diagnostics_interval": 100
+  },
+  "obstacles": []
+}
